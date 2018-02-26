@@ -8,21 +8,21 @@ const (
 	none contender = -1
 )
 
-type match struct {
+type Match struct {
 	contenders [2]string
 	score      [2]int
 	winner     contender
 }
 
-func newMatch(contenderA string, contenderB string) *match {
-	m := &match{contenders: [2]string{contenderA, contenderB}, score: [2]int{0, 0}, winner: none}
+func NewMatch(contenderA string, contenderB string) *Match {
+	m := &Match{contenders: [2]string{contenderA, contenderB}, score: [2]int{0, 0}, winner: none}
 	return m
 }
 
-func (m *match) WinA() {
+func (m *Match) WinA() {
 	m.score[a]++
 }
 
-func (m *match) WinB() {
+func (m *Match) WinB() {
 	m.score[b]++
 }

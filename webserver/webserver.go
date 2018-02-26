@@ -1,15 +1,18 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"net/http"
 	"strings"
 )
 
 func main() {
+	port := flag.Int("p", 8086, "port number")
+	flag.Parse()
 	http.HandleFunc("/", indexHandler)
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
-	log.Fatal(http.ListenAndServe(":8086", nil))
+	log.Fatal(http.ListenAndServe(":"+string(*port), nil))
 }
 
 func jsHandler(w http.ResponseWriter, r *http.Request) {

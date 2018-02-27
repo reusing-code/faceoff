@@ -16,7 +16,7 @@ func main() {
 	idxHndl := http.HandlerFunc(indexHandler)
 	idxHndlGz := gziphandler.GzipHandler(idxHndl)
 	http.Handle("/", idxHndlGz)
-	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
+	http.Handle("/static/", gziphandler.GzipHandler(http.StripPrefix("/static/", http.FileServer(http.Dir("static")))))
 	log.Fatal(http.ListenAndServe(":"+strconv.Itoa(*port), nil))
 }
 

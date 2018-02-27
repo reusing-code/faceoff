@@ -41,3 +41,22 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	http.ServeFile(w, r, "../client/index.html")
 }
+
+func templateHandler(w http.ResponseWriter, r *http.Request) {
+
+	ts, err := faceoff.LoadTemplatesFromDisk()
+	if err == nil {
+		gob, err := ts.EncodeGob()
+		if err == nil {
+			w.Header().Set("Content-Type", "application/octet-stream")
+			w.Write(gob)
+			return
+		}
+
+	}
+
+	w.WriteHeader(http.StatusInternalServerError)
+	w.Write([]byte("500 - Something bad happened!"))
+	return
+
+}

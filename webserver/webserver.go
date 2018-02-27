@@ -2,15 +2,22 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
 	"strings"
 
+	"github.com/reusing-code/faceoff"
+
 	"github.com/NYTimes/gziphandler"
 )
 
 func main() {
+	_, err := faceoff.LoadTemplatesFromDisk()
+	if err != nil {
+		fmt.Println(err)
+	}
 	port := flag.Int("p", 8086, "port number")
 	flag.Parse()
 	idxHndlGz := gziphandler.GzipHandler(http.HandlerFunc(indexHandler))

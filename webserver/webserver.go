@@ -13,8 +13,7 @@ import (
 func main() {
 	port := flag.Int("p", 8086, "port number")
 	flag.Parse()
-	idxHndl := http.HandlerFunc(indexHandler)
-	idxHndlGz := gziphandler.GzipHandler(idxHndl)
+	idxHndlGz := gziphandler.GzipHandler(http.HandlerFunc(indexHandler))
 	http.Handle("/", idxHndlGz)
 	http.Handle("/static/", gziphandler.GzipHandler(http.StripPrefix("/static/", http.FileServer(http.Dir("static")))))
 	log.Fatal(http.ListenAndServe(":"+strconv.Itoa(*port), nil))
@@ -29,7 +28,7 @@ func jsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
-	if strings.Contains(r.URL.Path, "client.js") {
+	if r.URL.Path == "/client.js" {
 		jsHandler(w, r)
 		return
 	}

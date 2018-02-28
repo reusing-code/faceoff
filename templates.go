@@ -3,6 +3,7 @@ package faceoff
 import (
 	"bytes"
 	"encoding/gob"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -10,12 +11,12 @@ import (
 )
 
 type TemplateSet struct {
-	templates map[string]string
+	Templates map[string]string
 }
 
 func LoadTemplatesFromDisk() (*TemplateSet, error) {
 	ts := &TemplateSet{}
-	ts.templates = make(map[string]string)
+	ts.Templates = make(map[string]string)
 	os.Chdir("..")
 	err := filepath.Walk("templates", func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -30,13 +31,15 @@ func LoadTemplatesFromDisk() (*TemplateSet, error) {
 		if err != nil {
 			return err
 		}
-		ts.templates[name] = string(b)
+		ts.Templates[name] = string(b)
+		fmt.Println(name)
 		return nil
 	})
 
 	if err != nil {
 		return ts, err
 	}
+	os.Chdir("webserver")
 	return ts, nil
 }
 

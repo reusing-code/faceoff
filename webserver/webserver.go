@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -14,15 +13,12 @@ import (
 )
 
 func main() {
-	_, err := faceoff.LoadTemplatesFromDisk()
-	if err != nil {
-		fmt.Println(err)
-	}
 	port := flag.Int("p", 8086, "port number")
 	flag.Parse()
 	idxHndlGz := gziphandler.GzipHandler(http.HandlerFunc(indexHandler))
 	http.Handle("/", idxHndlGz)
 	http.Handle("/static/", gziphandler.GzipHandler(http.StripPrefix("/static/", http.FileServer(http.Dir("static")))))
+	http.HandleFunc("/templates", templateHandler)
 	log.Fatal(http.ListenAndServe(":"+strconv.Itoa(*port), nil))
 }
 
@@ -35,7 +31,7 @@ func jsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path == "/client.js" {
+	if r.URL.Path == "/client.js" || r.URL.Path == "/client.js.map" {
 		jsHandler(w, r)
 		return
 	}
@@ -46,7 +42,8 @@ func templateHandler(w http.ResponseWriter, r *http.Request) {
 
 	ts, err := faceoff.LoadTemplatesFromDisk()
 	if err == nil {
-		gob, err := ts.EncodeGob()
+		var gob []byte
+		gob, err = ts.EncodeGob()
 		if err == nil {
 			w.Header().Set("Content-Type", "application/octet-stream")
 			w.Write(gob)
@@ -56,7 +53,7 @@ func templateHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusInternalServerError)
-	w.Write([]byte("500 - Something bad happened!"))
+	w.Write([]byte("500 - Something bad happened!" + err.Error()))
 	return
 
 }

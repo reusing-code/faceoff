@@ -2,7 +2,7 @@ package main
 
 import (
 	"bytes"
-	"encoding/json"
+	"html/template"
 	"net/http"
 
 	"github.com/reusing-code/faceoff"
@@ -14,15 +14,6 @@ func main() {
 	d := dom.GetWindow().Document()
 	d.GetElementByID("app").SetInnerHTML("<p>Baut das doch bitte!</p>")
 
-	// t := template.New("base")
-	// t = template.Must(t.ParseFiles("templates/layout/base.tmpl.html", "templates/matchvote.tmpl.html"))
-
-	// buf := &bytes.Buffer{}
-	// err := t.Execute(buf, nil)
-	// if err != nil {
-	// 	println(err.Error())
-	// }
-	// d.GetElementByID("app").SetInnerHTML(buf.String())
 	response, _ := http.Get("/templates")
 	buf := &bytes.Buffer{}
 	buf.ReadFrom(response.Body)
@@ -31,10 +22,21 @@ func main() {
 	if err != nil {
 		d.GetElementByID("app").AppendChild(d.CreateTextNode("Error: " + err.Error()))
 	}
-	b, _ := json.Marshal(ts)
-	text := d.CreateTextNode(string(b))
-	d.GetElementByID("app").AppendChild(text)
+	// b, _ := json.Marshal(ts)
+	// text := d.CreateTextNode(string(b))
+	// d.GetElementByID("app").AppendChild(text)
 
-	json.Unmarshal(b, ts)
+	// json.Unmarshal(b, ts)
+
+	t := template.New("base")
+	t = template.Must(t.Parse(ts.Templates["layout/base"]))
+	t = template.Must(t.Parse(ts.Templates["matchvote"]))
+
+	buf = &bytes.Buffer{}
+	err = t.Execute(buf, nil)
+	if err != nil {
+		println(err.Error())
+	}
+	d.GetElementByID("app").SetInnerHTML(buf.String())
 
 }

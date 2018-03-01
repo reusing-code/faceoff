@@ -2,8 +2,11 @@ package main
 
 import (
 	"flag"
+	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 
@@ -15,6 +18,10 @@ import (
 func main() {
 	port := flag.Int("p", 8086, "port number")
 	flag.Parse()
+
+	r := createRoster("values.txt")
+	fmt.Println(&r)
+
 	idxHndlGz := gziphandler.GzipHandler(http.HandlerFunc(indexHandler))
 	http.Handle("/", idxHndlGz)
 	http.Handle("/static/", gziphandler.GzipHandler(http.StripPrefix("/static/", http.FileServer(http.Dir("static")))))
@@ -56,4 +63,21 @@ func templateHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("500 - Something bad happened!" + err.Error()))
 	return
 
+}
+
+func createRoster(filename string) *faceoff.Roster {
+	f, err := os.Open(filename)
+	defer f.Close()
+	if err != nil {
+		panic(err)
+	}
+	b, err := ioutil.ReadAll(f)
+	if err != nil {
+		panic(err)
+	}
+	r, err := faceoff.CreateRoster(b)
+	if err != nil {
+		panic(err)
+	}
+	return r
 }

@@ -7,18 +7,18 @@ import (
 	"strings"
 )
 
-type contender int
+type Contender int
 
 const (
-	a    contender = 0
-	b    contender = 1
-	none contender = -1
+	A    Contender = 0
+	B    Contender = 1
+	NONE Contender = -1
 )
 
 type Match struct {
 	Contenders [2]string
 	Score      [2]int
-	Winner     contender
+	Winner     Contender
 }
 
 func CreateRoster(participants []byte) (*Roster, error) {
@@ -51,16 +51,28 @@ func CreateRoster(participants []byte) (*Roster, error) {
 }
 
 func NewMatch(contenderA string, contenderB string) *Match {
-	m := &Match{Contenders: [2]string{contenderA, contenderB}, Score: [2]int{0, 0}, Winner: none}
+	m := &Match{Contenders: [2]string{contenderA, contenderB}, Score: [2]int{0, 0}, Winner: NONE}
 	return m
 }
 
 func (m *Match) WinA() {
-	m.Score[a]++
+	m.Score[A]++
+	m.checkWinner()
 }
 
 func (m *Match) WinB() {
-	m.Score[b]++
+	m.Score[B]++
+	m.checkWinner()
+}
+
+func (m *Match) checkWinner() {
+	if m.Score[A] > m.Score[B] {
+		m.Winner = A
+	} else if m.Score[A] < m.Score[B] {
+		m.Winner = B
+	} else {
+		m.Winner = NONE
+	}
 }
 
 type Round struct {

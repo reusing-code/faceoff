@@ -1,8 +1,8 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -15,17 +15,19 @@ import (
 	"github.com/NYTimes/gziphandler"
 )
 
+var currentRoster *faceoff.Roster
+
 func main() {
 	port := flag.Int("p", 8086, "port number")
 	flag.Parse()
 
-	r := createRoster("values.txt")
-	fmt.Println(&r)
+	currentRoster = createRoster("values.txt")
 
 	idxHndlGz := gziphandler.GzipHandler(http.HandlerFunc(indexHandler))
 	http.Handle("/", idxHndlGz)
 	http.Handle("/static/", gziphandler.GzipHandler(http.StripPrefix("/static/", http.FileServer(http.Dir("static")))))
 	http.HandleFunc("/templates", templateHandler)
+	http.HandleFunc("/roster.json", rosterHandler)
 	log.Fatal(http.ListenAndServe(":"+strconv.Itoa(*port), nil))
 }
 
@@ -59,8 +61,7 @@ func templateHandler(w http.ResponseWriter, r *http.Request) {
 
 	}
 
-	w.WriteHeader(http.StatusInternalServerError)
-	w.Write([]byte("500 - Something bad happened!" + err.Error()))
+	handleError(w, err)
 	return
 
 }
@@ -80,4 +81,21 @@ func createRoster(filename string) *faceoff.Roster {
 		panic(err)
 	}
 	return r
+}
+
+func rosterHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	b, err := json.Marshal(currentRoster)
+	if err != nil {
+		handleError(w, err)
+	}
+	_, err = w.Write(b)
+	if err != nil {
+		handleError(w, err)
+	}
+}
+
+func handleError(w http.ResponseWriter, err error) {
+	w.WriteHeader(http.StatusInternalServerError)
+	w.Write([]byte("500 - Something bad happened! " + err.Error()))
 }

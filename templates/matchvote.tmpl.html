@@ -1,6 +1,6 @@
 {{define "content"}}
 <div class="form-group">
-    <button class="btn btn-success btn-lg btn-block my-3">ContenderA</button>
-    <button class="btn btn-success btn-lg btn-block my-3">ContenderB</button>
+    <button id="btn-contenderA" class="btn btn-success btn-lg btn-block my-3">{{index .Contenders 0}}</button>
+    <button id="btn-contenderB" class="btn btn-success btn-lg btn-block my-3">{{index .Contenders 1}}</button>
 </div>
 {{end}}

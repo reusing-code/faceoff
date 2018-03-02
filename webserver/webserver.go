@@ -28,6 +28,7 @@ func main() {
 	http.Handle("/static/", gziphandler.GzipHandler(http.StripPrefix("/static/", http.FileServer(http.Dir("static")))))
 	http.HandleFunc("/templates", templateHandler)
 	http.HandleFunc("/roster.json", rosterHandler)
+	http.HandleFunc("/submit-vote", voteHandler)
 	log.Fatal(http.ListenAndServe(":"+strconv.Itoa(*port), nil))
 }
 
@@ -98,4 +99,7 @@ func rosterHandler(w http.ResponseWriter, r *http.Request) {
 func handleError(w http.ResponseWriter, err error) {
 	w.WriteHeader(http.StatusInternalServerError)
 	w.Write([]byte("500 - Something bad happened! " + err.Error()))
+}
+
+func voteHandler(w http.ResponseWriter, r *http.Request) {
 }

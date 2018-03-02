@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"io/ioutil"
 	"net/http"
+	"strings"
 
 	"github.com/go-humble/locstor"
 
@@ -56,27 +57,24 @@ func votingView() {
 	currentRoster = &faceoff.Roster{}
 	json.Unmarshal([]byte(rosterStr), currentRoster)
 
+	matchShown := false
 	r := currentRoster.Rounds[len(currentRoster.Rounds)-1]
 	for _, m := range r.Matches {
 		if m.Winner == faceoff.NONE {
 			showMatch(m)
+			matchShown = true
 			break
 		}
 	}
+	if !matchShown {
+		showVotingFinished()
+	}
+
 }
 
 func showMatch(m *faceoff.Match) {
-	t := template.New("base")
-	t = template.Must(t.Parse(ts.Templates["layout/base"]))
-	t = template.Must(t.Parse(ts.Templates["matchvote"]))
-
-	buf := &bytes.Buffer{}
-	err := t.Execute(buf, m)
-	if err != nil {
-		println(err.Error())
-	}
+	renderTemplate("matchvote", m)
 	d := dom.GetWindow().Document()
-	d.GetElementByID("app").SetInnerHTML(buf.String())
 	btnA := d.GetElementByID("btn-contenderA").(*dom.HTMLButtonElement)
 	btnA.AddEventListener("click", false, func(event dom.Event) {
 		m.WinA()
@@ -96,4 +94,39 @@ func saveRoster() {
 	}
 	locstor.SetItem("currentRoster", string(b))
 	votingView()
+}
+
+func showVotingFinished() {
+	renderTemplate("finishedvote", nil)
+
+	_, err := locstor.GetItem("currentResultsTransmitted")
+	if err != nil {
+		if _, ok := err.(locstor.ItemNotFoundError); ok {
+			roster, err := locstor.GetItem("currentRoster")
+			if err != nil {
+				panic(err)
+			}
+			r, err := http.Post("submit-vote", "application/json", strings.NewReader(roster))
+			if err != nil {
+				panic(err)
+			}
+			if r.StatusCode >= 200 && r.StatusCode < 300 {
+				locstor.SetItem("currentResultsTransmitted", "TRUE")
+			}
+		}
+	}
+}
+
+func renderTemplate(templateName string, data interface{}) {
+	t := template.New("base")
+	t = template.Must(t.Parse(ts.Templates["layout/base"]))
+	t = template.Must(t.Parse(ts.Templates[templateName]))
+
+	buf := &bytes.Buffer{}
+	err := t.Execute(buf, data)
+	if err != nil {
+		println(err.Error())
+	}
+	d := dom.GetWindow().Document()
+	d.GetElementByID("app").SetInnerHTML(buf.String())
 }

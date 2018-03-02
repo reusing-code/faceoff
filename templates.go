@@ -3,7 +3,6 @@ package faceoff
 import (
 	"bytes"
 	"encoding/gob"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -32,7 +31,6 @@ func LoadTemplatesFromDisk() (*TemplateSet, error) {
 			return err
 		}
 		ts.Templates[name] = string(b)
-		fmt.Println(name)
 		return nil
 	})
 

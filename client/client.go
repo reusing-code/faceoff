@@ -20,7 +20,6 @@ var currentRoster *faceoff.Roster
 
 func main() {
 	d := dom.GetWindow().Document()
-	d.GetElementByID("app").SetInnerHTML("<p>Baut das doch bitte!</p>")
 
 	response, _ := http.Get("/templates")
 	buf := &bytes.Buffer{}
@@ -32,30 +31,29 @@ func main() {
 		d.GetElementByID("app").AppendChild(d.CreateTextNode("Error: " + err.Error()))
 	}
 
-	votingView()
+	go votingView()
 
 }
 
 func votingView() {
-	rosterStr, err := locstor.GetItem("currentRoster")
+	remoteRoster, err := getRosterFromServer()
 	if err != nil {
-		if _, ok := err.(locstor.ItemNotFoundError); ok {
-			r, err := http.Get("/roster.json")
-			if err != nil {
-				panic(err)
-			}
-			b, err := ioutil.ReadAll(r.Body)
-			if err != nil {
-				panic(err)
-			}
-			rosterStr = string(b)
-			locstor.SetItem("currentRoster", rosterStr)
-		} else {
-			panic(err)
+		panic(err)
+	}
+	localRoster, err := loadRoster()
+	if err != nil {
+		println(err)
+		localRoster = nil
+	}
+
+	currentRoster = remoteRoster
+	if localRoster != nil {
+		if bytes.Compare(localRoster.UUID, remoteRoster.UUID) == 0 {
+			currentRoster = localRoster
 		}
 	}
-	currentRoster = &faceoff.Roster{}
-	json.Unmarshal([]byte(rosterStr), currentRoster)
+
+	saveRoster()
 
 	matchShown := false
 	r := currentRoster.Rounds[len(currentRoster.Rounds)-1]
@@ -79,11 +77,13 @@ func showMatch(m *faceoff.Match) {
 	btnA.AddEventListener("click", false, func(event dom.Event) {
 		m.WinA()
 		saveRoster()
+		go votingView()
 	})
 	btnB := d.GetElementByID("btn-contenderB").(*dom.HTMLButtonElement)
 	btnB.AddEventListener("click", false, func(event dom.Event) {
 		m.WinB()
 		saveRoster()
+		go votingView()
 	})
 }
 
@@ -93,7 +93,34 @@ func saveRoster() {
 		panic(err)
 	}
 	locstor.SetItem("currentRoster", string(b))
-	votingView()
+}
+
+func loadRoster() (*faceoff.Roster, error) {
+	rosterStr, err := locstor.GetItem("currentRoster")
+	if _, ok := err.(locstor.ItemNotFoundError); ok {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	result := &faceoff.Roster{}
+	err = json.Unmarshal([]byte(rosterStr), result)
+	return result, err
+
+}
+
+func getRosterFromServer() (*faceoff.Roster, error) {
+	r, err := http.Get("/roster.json")
+	if err != nil {
+		return nil, err
+	}
+	b, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		return nil, err
+	}
+	result := &faceoff.Roster{}
+	err = json.Unmarshal(b, result)
+	return result, err
 }
 
 func showVotingFinished() {

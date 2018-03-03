@@ -5,6 +5,8 @@ import (
 	"bytes"
 	"errors"
 	"strings"
+
+	"github.com/google/uuid"
 )
 
 type Contender int
@@ -45,7 +47,8 @@ func CreateRoster(participants []byte) (*Roster, error) {
 		round.Matches = append(round.Matches, m)
 	}
 	res.Rounds = append(res.Rounds, round)
-
+	id, _ := uuid.New().MarshalBinary()
+	res.UUID = id
 	return res, nil
 
 }
@@ -80,5 +83,6 @@ type Round struct {
 }
 
 type Roster struct {
+	UUID   []byte
 	Rounds []*Round
 }

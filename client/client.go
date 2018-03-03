@@ -50,7 +50,11 @@ func votingView() {
 	if localRoster != nil {
 		if bytes.Compare(localRoster.UUID, remoteRoster.UUID) == 0 {
 			currentRoster = localRoster
+		} else {
+			locstor.RemoveItem("currentResultsTransmitted")
 		}
+	} else {
+		locstor.RemoveItem("currentResultsTransmitted")
 	}
 
 	saveRoster()

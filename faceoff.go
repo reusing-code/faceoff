@@ -3,7 +3,10 @@ package faceoff
 import (
 	"bufio"
 	"bytes"
+	"encoding/json"
 	"errors"
+	"io"
+	"io/ioutil"
 	"math/rand"
 	"strings"
 
@@ -150,6 +153,29 @@ func checkWinner(m *Match) {
 			m.Winner = A
 		} else {
 			m.Winner = B
+		}
+	}
+}
+
+func ParseRoster(r io.ReadCloser) (*Roster, error) {
+	b, err := ioutil.ReadAll(r)
+	if err != nil {
+		return nil, err
+	}
+	r.Close()
+	result := &Roster{}
+	err = json.Unmarshal(b, result)
+	return result, err
+}
+
+func (r *Roster) AddVotes(vote *Roster) {
+	currentRound := r.Rounds[len(r.Rounds)-1]
+	voteRound := vote.Rounds[len(r.Rounds)-1]
+
+	for i, voteMatch := range voteRound.Matches {
+		match := currentRound.Matches[i]
+		if voteMatch.Winner != NONE {
+			match.Score[voteMatch.Winner]++
 		}
 	}
 }

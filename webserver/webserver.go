@@ -111,6 +111,13 @@ func handleError(w http.ResponseWriter, err error) {
 }
 
 func voteHandler(w http.ResponseWriter, r *http.Request) {
+	voteRoster, err := faceoff.ParseRoster(r.Body)
+	if err != nil {
+		return
+	}
+	if bytes.Compare(voteRoster.UUID, currentScores.UUID) == 0 {
+		currentScores.AddVotes(voteRoster)
+	}
 }
 
 func roundAdvanceHandler(w http.ResponseWriter, r *http.Request) {

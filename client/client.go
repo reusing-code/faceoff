@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"html/template"
-	"io/ioutil"
 	"net/http"
 	"strings"
 
@@ -118,12 +117,7 @@ func getRosterFromServer() (*faceoff.Roster, error) {
 	if err != nil {
 		return nil, err
 	}
-	b, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		return nil, err
-	}
-	result := &faceoff.Roster{}
-	err = json.Unmarshal(b, result)
+	result, err := faceoff.ParseRoster(r.Body)
 	return result, err
 }
 

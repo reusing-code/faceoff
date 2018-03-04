@@ -5,10 +5,12 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"math/rand"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -25,6 +27,10 @@ type Match struct {
 	Contenders [2]string
 	Score      [2]int
 	Winner     Contender
+}
+
+func init() {
+	rand.Seed(time.Now().UTC().UnixNano())
 }
 
 func CreateRoster(participants []byte) (*Roster, error) {
@@ -92,10 +98,8 @@ func (r *Roster) DeepCopy() *Roster {
 		UUID:   r.UUID,
 		Rounds: make([]*Round, 0),
 	}
-
 	for _, orgRound := range r.Rounds {
 		copyRound := &Round{Matches: make([]*Match, 0)}
-
 		for _, orgMatch := range orgRound.Matches {
 			copyMatch := NewMatch(orgMatch.Contenders[A], orgMatch.Contenders[B])
 			copyMatch.Score[A] = orgMatch.Score[A]
@@ -111,12 +115,12 @@ func (r *Roster) DeepCopy() *Roster {
 
 func (r *Roster) AdvanceRound() {
 	currentRound := r.Rounds[len(r.Rounds)-1]
-	if len(currentRound.Matches) < 2 {
+	if len(currentRound.Matches) < 1 {
 		return
 	}
 	nextRound := &Round{}
 
-	winners := make([]string, len(currentRound.Matches)/2)
+	winners := make([]string, 0, len(currentRound.Matches)/2)
 	for _, currentMatch := range currentRound.Matches {
 		checkWinner(currentMatch)
 		winners = append(winners, currentMatch.Contenders[currentMatch.Winner])
@@ -130,11 +134,14 @@ func (r *Roster) AdvanceRound() {
 }
 
 func generateMatches(names []string) []*Match {
+	for i, n := range names {
+		fmt.Println(i, ": ", n)
+	}
 	l := len(names)
 	if l%2 != 0 {
 		panic("Number of names not divisible by 2")
 	}
-	res := make([]*Match, l/2)
+	res := make([]*Match, 0, l/2)
 	for i := 0; i < l; i++ {
 		m := NewMatch(names[i], names[i+1])
 		i++

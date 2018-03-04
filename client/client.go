@@ -30,8 +30,27 @@ func main() {
 		d.GetElementByID("app").AppendChild(d.CreateTextNode("Error: " + err.Error()))
 	}
 
-	go votingView()
+	path := dom.GetWindow().Location().Pathname
+	if strings.Contains(path, "/admin") {
+		go adminView()
+	} else {
+		go votingView()
+	}
 
+}
+
+func adminView() {
+	remoteRoster, err := getRosterFromServer()
+	if err != nil {
+		panic(err)
+	}
+
+	renderTemplate("admin", nil)
+	d := dom.GetWindow().Document()
+	btnA := d.GetElementByID("btn-advance-round").(*dom.HTMLButtonElement)
+	btnA.AddEventListener("click", false, func(event dom.Event) {
+		go http.Post("/advance-round", "POST", bytes.NewReader(remoteRoster.UUID))
+	})
 }
 
 func votingView() {

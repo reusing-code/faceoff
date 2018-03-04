@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"math/rand"
@@ -134,9 +133,6 @@ func (r *Roster) AdvanceRound() {
 }
 
 func generateMatches(names []string) []*Match {
-	for i, n := range names {
-		fmt.Println(i, ": ", n)
-	}
 	l := len(names)
 	if l%2 != 0 {
 		panic("Number of names not divisible by 2")

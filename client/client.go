@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/gopherjs/gopherjs/js"
+
 	"github.com/go-humble/locstor"
 
 	"github.com/reusing-code/faceoff"
@@ -33,6 +35,8 @@ func main() {
 	path := dom.GetWindow().Location().Pathname
 	if strings.Contains(path, "/admin") {
 		go adminView()
+	} else if strings.Contains(path, "/bracket") {
+		go bracketView()
 	} else {
 		go votingView()
 	}
@@ -51,6 +55,21 @@ func adminView() {
 	btnA.AddEventListener("click", false, func(event dom.Event) {
 		go http.Post("/advance-round", "POST", bytes.NewReader(remoteRoster.UUID))
 	})
+}
+
+func bracketView() {
+	scoreRoster, err := getScoreRosterFromServer()
+	if err != nil {
+		panic(err)
+	}
+
+	renderTemplate("bracket", nil)
+	// d := dom.GetWindow().Document()
+
+	// asd := d.GetElementByID("bracket").Underlying()
+	// asd.Call("bracket", getBracketOptions())
+
+	js.Global.Call("jQuery", "#bracket").Call("bracket", getBracketOptions(scoreRoster))
 }
 
 func votingView() {
@@ -133,6 +152,15 @@ func loadRoster() (*faceoff.Roster, error) {
 
 func getRosterFromServer() (*faceoff.Roster, error) {
 	r, err := http.Get("/roster.json")
+	if err != nil {
+		return nil, err
+	}
+	result, err := faceoff.ParseRoster(r.Body)
+	return result, err
+}
+
+func getScoreRosterFromServer() (*faceoff.Roster, error) {
+	r, err := http.Get("/roster_score.json")
 	if err != nil {
 		return nil, err
 	}

@@ -64,10 +64,14 @@ func adminView() {
 	renderTemplate("admin", data)
 	d := dom.GetWindow().Document()
 	btnA := d.GetElementByID("btn-advance-round").(*dom.HTMLButtonElement)
-	btnA.AddEventListener("click", false, func(event dom.Event) {
-		go http.Post("/advance-round", "POST", bytes.NewReader(remoteRoster.UUID))
-		route("/bracket", true)
-	})
+	if contenderCount > 2 {
+		btnA.AddEventListener("click", false, func(event dom.Event) {
+			go http.Post("/advance-round", "POST", bytes.NewReader(remoteRoster.UUID))
+			route("/bracket", true)
+		})
+	} else {
+		btnA.Disabled = true
+	}
 }
 
 func bracketView() {

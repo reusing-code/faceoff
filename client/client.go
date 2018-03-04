@@ -64,10 +64,6 @@ func bracketView() {
 	}
 
 	renderTemplate("bracket", nil)
-	// d := dom.GetWindow().Document()
-
-	// asd := d.GetElementByID("bracket").Underlying()
-	// asd.Call("bracket", getBracketOptions())
 
 	js.Global.Call("jQuery", "#bracket").Call("bracket", getBracketOptions(scoreRoster))
 }

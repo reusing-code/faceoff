@@ -133,13 +133,13 @@ func showMatch(m *faceoff.Match) {
 	btnA.AddEventListener("click", false, func(event dom.Event) {
 		m.WinA()
 		saveRoster()
-		route("vote", false)
+		route("/vote", false)
 	})
 	btnB := d.GetElementByID("btn-contenderB").(*dom.HTMLButtonElement)
 	btnB.AddEventListener("click", false, func(event dom.Event) {
 		m.WinB()
 		saveRoster()
-		route("vote", false)
+		route("/vote", false)
 	})
 }
 

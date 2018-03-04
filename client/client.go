@@ -32,15 +32,16 @@ func main() {
 		d.GetElementByID("app").AppendChild(d.CreateTextNode("Error: " + err.Error()))
 	}
 
-	path := dom.GetWindow().Location().Pathname
-	if strings.Contains(path, "/admin") {
-		go adminView()
-	} else if strings.Contains(path, "/bracket") {
-		go bracketView()
-	} else {
-		go votingView()
-	}
+	js.Global.Call("addEventListener", "popstate", func(event *js.Object) {
+		route("", false)
+		// if event.Get("state") == nil {
+		// 	route("")
+		// } else {
+		// 	route(event.Get("state").String())
+		// }
+	})
 
+	route("", true)
 }
 
 func adminView() {
@@ -114,13 +115,13 @@ func showMatch(m *faceoff.Match) {
 	btnA.AddEventListener("click", false, func(event dom.Event) {
 		m.WinA()
 		saveRoster()
-		go votingView()
+		route("vote", false)
 	})
 	btnB := d.GetElementByID("btn-contenderB").(*dom.HTMLButtonElement)
 	btnB.AddEventListener("click", false, func(event dom.Event) {
 		m.WinB()
 		saveRoster()
-		go votingView()
+		route("vote", false)
 	})
 }
 
@@ -197,4 +198,21 @@ func renderTemplate(templateName string, data interface{}) {
 	}
 	d := dom.GetWindow().Document()
 	d.GetElementByID("app").SetInnerHTML(buf.String())
+
+	bracket := d.GetElementByID("bracket-link").(*dom.HTMLAnchorElement)
+	bracket.AddEventListener("click", false, func(event dom.Event) {
+		event.PreventDefault()
+		route("/bracket", true)
+	})
+	vote := d.GetElementByID("vote-link").(*dom.HTMLAnchorElement)
+	vote.AddEventListener("click", false, func(event dom.Event) {
+		event.PreventDefault()
+		route("/vote", true)
+	})
+	admin := d.GetElementByID("admin-link").(*dom.HTMLAnchorElement)
+	admin.AddEventListener("click", false, func(event dom.Event) {
+		event.PreventDefault()
+		route("/admin", true)
+	})
+
 }

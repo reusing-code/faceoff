@@ -154,8 +154,10 @@ func checkWinner(m *Match) {
 	} else {
 		if rand.Intn(2) == 0 {
 			m.Winner = A
+			m.Score[A]++
 		} else {
 			m.Winner = B
+			m.Score[B]++
 		}
 	}
 }

@@ -84,6 +84,10 @@ func bracketView() {
 	btnA.AddEventListener("click", false, func(event dom.Event) {
 		route("/vote", true)
 	})
+	btnB := dom.GetWindow().Document().GetElementByID("btn-bracket").(*dom.HTMLButtonElement)
+	btnB.AddEventListener("click", false, func(event dom.Event) {
+		route("/bracket", false)
+	})
 
 }
 
@@ -202,6 +206,11 @@ func showVotingFinished() {
 			}
 		}
 	}
+
+	btnA := dom.GetWindow().Document().GetElementByID("btn-bracket").(*dom.HTMLButtonElement)
+	btnA.AddEventListener("click", false, func(event dom.Event) {
+		route("/bracket", true)
+	})
 }
 
 func renderTemplate(templateName string, data interface{}) {

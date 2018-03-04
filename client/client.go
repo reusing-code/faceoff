@@ -50,11 +50,23 @@ func adminView() {
 		panic(err)
 	}
 
-	renderTemplate("admin", nil)
+	currentRound := len(remoteRoster.Rounds) - 1
+	contenderCount := len(remoteRoster.Rounds[currentRound].Matches) * 2
+
+	data := struct {
+		Round          int
+		ContenderCount int
+	}{
+		currentRound + 1,
+		contenderCount,
+	}
+
+	renderTemplate("admin", data)
 	d := dom.GetWindow().Document()
 	btnA := d.GetElementByID("btn-advance-round").(*dom.HTMLButtonElement)
 	btnA.AddEventListener("click", false, func(event dom.Event) {
 		go http.Post("/advance-round", "POST", bytes.NewReader(remoteRoster.UUID))
+		route("/bracket", true)
 	})
 }
 
@@ -67,6 +79,12 @@ func bracketView() {
 	renderTemplate("bracket", nil)
 
 	js.Global.Call("jQuery", "#bracket").Call("bracket", getBracketOptions(scoreRoster))
+
+	btnA := dom.GetWindow().Document().GetElementByID("btn-vote").(*dom.HTMLButtonElement)
+	btnA.AddEventListener("click", false, func(event dom.Event) {
+		route("/vote", true)
+	})
+
 }
 
 func votingView() {

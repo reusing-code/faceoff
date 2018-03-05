@@ -12,6 +12,13 @@ import (
 	"honnef.co/go/js/dom"
 )
 
+type matchViewData struct {
+	ContenderA string
+	ContenderB string
+	RoundNum   int
+	MatchNum   int
+}
+
 func adminView() {
 	remoteRoster, err := getRosterFromServer()
 	if err != nil {
@@ -89,9 +96,15 @@ func votingView() {
 
 	matchShown := false
 	r := currentRoster.Rounds[len(currentRoster.Rounds)-1]
-	for _, m := range r.Matches {
+	for i, m := range r.Matches {
 		if m.Winner == faceoff.NONE {
-			showMatch(m)
+			data := matchViewData{
+				ContenderA: m.Contenders[faceoff.A],
+				ContenderB: m.Contenders[faceoff.B],
+				RoundNum:   len(currentRoster.Rounds),
+				MatchNum:   i + 1,
+			}
+			showMatch(data, m)
 			matchShown = true
 			break
 		}
@@ -102,8 +115,8 @@ func votingView() {
 
 }
 
-func showMatch(m *faceoff.Match) {
-	renderTemplate("matchvote", m)
+func showMatch(data matchViewData, m *faceoff.Match) {
+	renderTemplate("matchvote", data)
 	d := dom.GetWindow().Document()
 	btnA := d.GetElementByID("btn-contenderA").(*dom.HTMLButtonElement)
 	btnA.AddEventListener("click", false, func(event dom.Event) {

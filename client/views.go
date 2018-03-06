@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"html/template"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/go-humble/locstor"
@@ -47,6 +48,11 @@ func adminView() {
 	} else {
 		btnA.Disabled = true
 	}
+
+	btnNew := d.GetElementByID("btn-new-tournament").(*dom.HTMLButtonElement)
+	btnNew.AddEventListener("click", false, func(event dom.Event) {
+		route("/new", true)
+	})
 }
 
 func bracketView() {
@@ -155,6 +161,56 @@ func showVotingFinished() {
 	btnA := dom.GetWindow().Document().GetElementByID("btn-bracket").(*dom.HTMLButtonElement)
 	btnA.AddEventListener("click", false, func(event dom.Event) {
 		route("/bracket", true)
+	})
+}
+
+func newBracketView() {
+	renderTemplate("newbracket", nil)
+	handler := func(ev dom.Event) {
+		count, _ := strconv.Atoi(ev.Target().InnerHTML())
+		showContestantInputs(count)
+	}
+	contestantButtons := dom.GetWindow().Document().GetElementsByClassName("btn-contestant-number")
+	for _, button := range contestantButtons {
+		button.AddEventListener("click", false, handler)
+	}
+}
+
+func showContestantInputs(count int) {
+	d := dom.GetWindow().Document()
+	formDiv := d.GetElementByID("contestant-input-elements").(*dom.HTMLDivElement)
+
+	t := template.New("contestant-input")
+	t = template.Must(t.Parse(ts.Templates["snippets/contestant-input"]))
+
+	nums := make([]int, count)
+	for i := 0; i < count; i++ {
+		nums[i] = i + 1
+	}
+	data := struct {
+		Nums []int
+	}{
+		nums,
+	}
+
+	buf := &bytes.Buffer{}
+	err := t.Execute(buf, data)
+	if err != nil {
+		println(err.Error())
+	}
+
+	formDiv.SetInnerHTML(buf.String())
+	d.GetElementByID("form-contestant-names").AddEventListener("submit", false, func(event dom.Event) {
+		event.PreventDefault()
+		result := dom.GetWindow().Confirm("Erstellen eines neuen Wettbewerb ersetzt den aktuellen! Fortfahren?")
+		if !result {
+			return
+		}
+		contestants := make([]string, count)
+		for i, input := range d.GetElementsByClassName("contestant-input") {
+			contestants[i] = input.(*dom.HTMLInputElement).Value
+		}
+		go commitNewRoster(contestants)
 	})
 }
 

@@ -1,0 +1,8 @@
+{{define "contestant-input"}} 
+{{ range $num := .Nums }}
+<div class="form-group">
+    <input type="text" class="form-control contestant-input" required  id="contestant-input-{{ $num }}" placeholder="Wettbewerber {{ $num }}">
+</div>
+{{end}}
+<button type="submit" class="btn btn-primary">Erstellen</button>
+{{end}}

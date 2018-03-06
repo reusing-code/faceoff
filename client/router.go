@@ -16,13 +16,15 @@ func route(path string, addToHistory bool) {
 
 	if addToHistory {
 		history := js.Global.Get("history")
-		history.Call("pushState", path, "", path)
+		history.Call("pushState", nil, "", path)
 	}
 
 	if path == "/admin" {
 		go adminView()
 	} else if path == "/vote" {
 		go votingView()
+	} else if path == "/new" {
+		go newBracketView()
 	} else {
 		go bracketView()
 	}

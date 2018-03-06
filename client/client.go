@@ -32,11 +32,6 @@ func main() {
 
 	js.Global.Call("addEventListener", "popstate", func(event *js.Object) {
 		route("", false)
-		// if event.Get("state") == nil {
-		// 	route("")
-		// } else {
-		// 	route(event.Get("state").String())
-		// }
 	})
 
 	route("", true)
@@ -80,4 +75,13 @@ func getScoreRosterFromServer() (*faceoff.Roster, error) {
 	}
 	result, err := faceoff.ParseRoster(r.Body)
 	return result, err
+}
+
+func commitNewRoster(contestants []string) {
+	marshalled, err := json.Marshal(contestants)
+	if err != nil {
+		println(err)
+		return
+	}
+	http.Post("/commit-new-roster", "POST", bytes.NewReader(marshalled))
 }

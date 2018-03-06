@@ -84,4 +84,5 @@ func commitNewRoster(contestants []string) {
 		return
 	}
 	http.Post("/commit-new-roster", "POST", bytes.NewReader(marshalled))
+	route("/", true)
 }

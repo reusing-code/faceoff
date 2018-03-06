@@ -32,7 +32,7 @@ func init() {
 	rand.Seed(time.Now().UTC().UnixNano())
 }
 
-func CreateRoster(participants []byte) (*Roster, error) {
+func CreateRosterRaw(participants []byte) (*Roster, error) {
 	buf := bufio.NewScanner(bytes.NewReader(participants))
 	partSlice := make([]string, 0, 16)
 	for buf.Scan() {
@@ -41,7 +41,11 @@ func CreateRoster(participants []byte) (*Roster, error) {
 			partSlice = append(partSlice, name)
 		}
 	}
-	l := len(partSlice)
+	return CreateRoster(partSlice)
+}
+
+func CreateRoster(participants []string) (*Roster, error) {
+	l := len(participants)
 	// very ugly, but good enough for now
 	if l != 2 && l != 4 && l != 8 && l != 16 && l != 32 {
 		return nil, errors.New("Unsupported participant number")
@@ -50,7 +54,7 @@ func CreateRoster(participants []byte) (*Roster, error) {
 	res := &Roster{Rounds: make([]*Round, 0)}
 	round := &Round{}
 
-	round.Matches = generateMatches(partSlice)
+	round.Matches = generateMatches(participants)
 	res.Rounds = append(res.Rounds, round)
 	id, _ := uuid.New().MarshalBinary()
 	res.UUID = id

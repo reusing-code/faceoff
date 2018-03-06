@@ -34,6 +34,8 @@ func main() {
 	http.HandleFunc("/roster_score.json", rosterHandler)
 	http.HandleFunc("/submit-vote", voteHandler)
 	http.HandleFunc("/advance-round", roundAdvanceHandler)
+	http.HandleFunc("/commit-new-roster", newRosterHandler)
+
 	log.Fatal(http.ListenAndServe(":"+strconv.Itoa(*port), nil))
 }
 
@@ -82,7 +84,7 @@ func createRoster(filename string) *faceoff.Roster {
 	if err != nil {
 		panic(err)
 	}
-	r, err := faceoff.CreateRoster(b)
+	r, err := faceoff.CreateRosterRaw(b)
 	if err != nil {
 		panic(err)
 	}
@@ -133,4 +135,26 @@ func roundAdvanceHandler(w http.ResponseWriter, r *http.Request) {
 		currentScores.AdvanceRound()
 		currentRoster = currentScores.DeepCopy()
 	}
+}
+
+func newRosterHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		println("/commit-new-roster called with " + r.Method + ". Ignoring")
+		return
+	}
+	b := &bytes.Buffer{}
+	b.ReadFrom(r.Body)
+	r.Body.Close()
+
+	participants := make([]string, 0)
+	json.Unmarshal(b.Bytes(), &participants)
+
+	roster, err := faceoff.CreateRoster(participants)
+	if err != nil {
+		println("Bad data in /commit-new-roster: " + err.Error())
+		return
+	}
+	currentRoster = roster
+	currentScores = currentRoster.DeepCopy()
+
 }

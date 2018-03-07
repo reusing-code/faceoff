@@ -38,6 +38,9 @@ func adminView() {
 	}
 
 	renderTemplate("admin", data)
+
+	setActiveNavItem("admin-link")
+
 	d := dom.GetWindow().Document()
 	btnA := d.GetElementByID("btn-advance-round").(*dom.HTMLButtonElement)
 	if contenderCount > 2 {
@@ -62,6 +65,7 @@ func bracketView() {
 	}
 
 	renderTemplate("bracket", nil)
+	setActiveNavItem("bracket-link")
 
 	js.Global.Call("jQuery", "#bracket").Call("bracket", getBracketOptions(scoreRoster))
 
@@ -123,6 +127,7 @@ func votingView() {
 
 func showMatch(data matchViewData, m *faceoff.Match) {
 	renderTemplate("matchvote", data)
+	setActiveNavItem("vote-link")
 	d := dom.GetWindow().Document()
 	btnA := d.GetElementByID("btn-contenderA").(*dom.HTMLButtonElement)
 	btnA.AddEventListener("click", false, func(event dom.Event) {
@@ -140,6 +145,7 @@ func showMatch(data matchViewData, m *faceoff.Match) {
 
 func showVotingFinished() {
 	renderTemplate("finishedvote", nil)
+	setActiveNavItem("vote-link")
 
 	_, err := locstor.GetItem("currentResultsTransmitted")
 	if err != nil {

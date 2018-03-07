@@ -29,3 +29,14 @@ func route(path string, addToHistory bool) {
 		go bracketView()
 	}
 }
+
+func setActiveNavItem(id string) {
+	d := dom.GetWindow().Document()
+	nav := d.GetElementByID("navbarNav")
+	navLinks := nav.GetElementsByClassName("nav-link")
+	for _, link := range navLinks {
+		link.Class().Remove("active")
+	}
+
+	d.GetElementByID(id).Class().Add("active")
+}

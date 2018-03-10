@@ -95,12 +95,15 @@ type Roster struct {
 	UUID         []byte
 	Rounds       []*Round
 	CurrentVotes int
+	ActiveRound  int
 }
 
 func (r *Roster) DeepCopy() *Roster {
 	copy := &Roster{
-		UUID:   r.UUID,
-		Rounds: make([]*Round, 0),
+		UUID:         r.UUID,
+		Rounds:       make([]*Round, 0),
+		CurrentVotes: r.CurrentVotes,
+		ActiveRound:  r.ActiveRound,
 	}
 	for _, orgRound := range r.Rounds {
 		copyRound := &Round{Matches: make([]*Match, 0)}
@@ -118,7 +121,10 @@ func (r *Roster) DeepCopy() *Roster {
 }
 
 func (r *Roster) AdvanceRound() {
-	currentRound := r.Rounds[len(r.Rounds)-1]
+	if r.ActiveRound < 0 {
+		return
+	}
+	currentRound := r.Rounds[r.ActiveRound]
 	if len(currentRound.Matches) < 1 {
 		return
 	}
@@ -130,8 +136,14 @@ func (r *Roster) AdvanceRound() {
 		winners = append(winners, currentMatch.Contenders[currentMatch.Winner])
 	}
 
-	nextRound.Matches = generateMatches(winners)
-	r.Rounds = append(r.Rounds, nextRound)
+	if len(winners) > 1 {
+		nextRound.Matches = generateMatches(winners)
+		r.Rounds = append(r.Rounds, nextRound)
+		r.ActiveRound++
+
+	} else {
+		r.ActiveRound = -1
+	}
 
 	id, _ := uuid.New().MarshalBinary()
 	r.UUID = id

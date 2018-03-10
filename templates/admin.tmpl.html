@@ -1,7 +1,11 @@
 {{define "content"}}
 <div class="form-group">
+    {{ if .Round}}
     <p class="text-center my-3">Aktuelle Runde: {{ .Round }} ({{ .ContenderCount }} Konkurrenten)</p>
-    <button id="btn-advance-round" class="btn btn btn-info btn-lg btn-block my-3">Nächste Runde</button>
+    <button id="btn-advance-round" class="btn btn btn-info btn-lg btn-block my-3">Runde beenden</button>
+    {{ else }}
+    <p class="text-center my-3">Aktueller Wettbewerb abgeschlossen</p>
+    {{end}}
 </div>
 <div class="form-group">
         &nbsp;

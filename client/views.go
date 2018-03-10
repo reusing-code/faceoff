@@ -48,8 +48,10 @@ func adminView() {
 	if remoteRoster.ActiveRound >= 0 {
 		btnA := d.GetElementByID("btn-advance-round").(*dom.HTMLButtonElement)
 		btnA.AddEventListener("click", false, func(event dom.Event) {
-			go http.Post("/advance-round", "POST", bytes.NewReader(remoteRoster.UUID))
-			route("/bracket", true)
+			go func() {
+				http.Post("/advance-round", "POST", bytes.NewReader(remoteRoster.UUID))
+				route("/bracket", true)
+			}()
 		})
 	}
 

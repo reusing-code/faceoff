@@ -16,15 +16,19 @@ import (
 	"github.com/NYTimes/gziphandler"
 )
 
-var currentRoster *faceoff.Roster
-var currentScores *faceoff.Roster
+const rosterKey = "testKey"
+const scoreKey = "scoreKey"
 
 func main() {
 	port := flag.Int("p", 8086, "port number")
 	flag.Parse()
 
-	currentRoster = createRoster("values.txt")
-	currentScores = currentRoster.DeepCopy()
+	OpenDB()
+
+	currentRoster := createRoster("values.txt")
+
+	SetRoster(rosterKey, currentRoster)
+	SetRoster(scoreKey, currentRoster)
 
 	idxHndlGz := gziphandler.GzipHandler(http.HandlerFunc(indexHandler))
 	http.Handle("/", idxHndlGz)
@@ -91,7 +95,10 @@ func createRoster(filename string) *faceoff.Roster {
 }
 
 func rosterHandler(w http.ResponseWriter, r *http.Request) {
-	roster := currentRoster
+	roster, err := GetRoster(rosterKey)
+	if err != nil {
+		handleNotFound(w, r)
+	}
 	w.Header().Set("Content-Type", "application/json")
 	b, err := json.Marshal(roster)
 	if err != nil {
@@ -108,14 +115,24 @@ func handleError(w http.ResponseWriter, err error) {
 	w.Write([]byte("500 - Something bad happened! " + err.Error()))
 }
 
+func handleNotFound(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotFound)
+	w.Write([]byte("404 - " + r.URL.Path))
+}
+
 func voteHandler(w http.ResponseWriter, r *http.Request) {
 	voteRoster, err := faceoff.ParseRoster(r.Body)
 	if err != nil {
 		return
 	}
-	if bytes.Compare(voteRoster.UUID, currentScores.UUID) == 0 {
-		currentScores.AddVotes(voteRoster)
-		currentRoster.CurrentVotes++
+	scoreRoster, err := GetRoster(scoreKey)
+	if err != nil {
+		return
+	}
+	if bytes.Compare(voteRoster.UUID, scoreRoster.UUID) == 0 {
+		scoreRoster.AddVotes(voteRoster)
+		scoreRoster.CurrentVotes++
+		SetRoster(scoreKey, scoreRoster)
 	}
 }
 
@@ -128,9 +145,14 @@ func roundAdvanceHandler(w http.ResponseWriter, r *http.Request) {
 	b.ReadFrom(r.Body)
 	id := b.Bytes()
 	r.Body.Close()
-	if bytes.Compare(id, currentRoster.UUID) == 0 {
-		currentScores.AdvanceRound()
-		currentRoster = currentScores.DeepCopy()
+	scoreRoster, err := GetRoster(scoreKey)
+	if err != nil {
+		return
+	}
+	if bytes.Compare(id, scoreRoster.UUID) == 0 {
+		scoreRoster.AdvanceRound()
+		SetRoster(rosterKey, scoreRoster)
+		SetRoster(scoreKey, scoreRoster)
 	}
 }
 
@@ -151,7 +173,7 @@ func newRosterHandler(w http.ResponseWriter, r *http.Request) {
 		println("Bad data in /commit-new-roster: " + err.Error())
 		return
 	}
-	currentRoster = roster
-	currentScores = currentRoster.DeepCopy()
+	SetRoster(rosterKey, roster)
+	SetRoster(scoreKey, roster)
 
 }

@@ -1,9 +1,11 @@
-package faceoff
+package main
 
 import (
 	"bytes"
 	"encoding/gob"
 	"fmt"
+
+	"github.com/reusing-code/faceoff"
 
 	bolt "github.com/coreos/bbolt"
 )
@@ -33,7 +35,7 @@ func CloseDB() error {
 	return db.Close()
 }
 
-func GetRoster(id string) (*Roster, error) {
+func GetRoster(id string) (*faceoff.Roster, error) {
 	key := []byte(id)
 	var value []byte
 	err := db.View(func(tx *bolt.Tx) error {
@@ -45,13 +47,13 @@ func GetRoster(id string) (*Roster, error) {
 		return nil, fmt.Errorf("No key '%s' in DB", id)
 	}
 
-	result := &Roster{}
+	result := &faceoff.Roster{}
 	dec := gob.NewDecoder(bytes.NewReader(value))
 	err = dec.Decode(result)
 	return result, err
 }
 
-func SetRoster(id string, roster *Roster) error {
+func SetRoster(id string, roster *faceoff.Roster) error {
 	buf := &bytes.Buffer{}
 	enc := gob.NewEncoder(buf)
 	err := enc.Encode(roster)

@@ -92,8 +92,9 @@ type Round struct {
 }
 
 type Roster struct {
-	UUID   []byte
-	Rounds []*Round
+	UUID         []byte
+	Rounds       []*Round
+	CurrentVotes int
 }
 
 func (r *Roster) DeepCopy() *Roster {
@@ -134,6 +135,7 @@ func (r *Roster) AdvanceRound() {
 
 	id, _ := uuid.New().MarshalBinary()
 	r.UUID = id
+	r.CurrentVotes = 0
 }
 
 func generateMatches(names []string) []*Match {

@@ -31,7 +31,6 @@ func main() {
 	http.Handle("/static/", gziphandler.GzipHandler(http.StripPrefix("/static/", http.FileServer(http.Dir("static")))))
 	http.HandleFunc("/templates", templateHandler)
 	http.HandleFunc("/roster.json", rosterHandler)
-	http.HandleFunc("/roster_score.json", rosterHandler)
 	http.HandleFunc("/submit-vote", voteHandler)
 	http.HandleFunc("/advance-round", roundAdvanceHandler)
 	http.HandleFunc("/commit-new-roster", newRosterHandler)
@@ -93,9 +92,6 @@ func createRoster(filename string) *faceoff.Roster {
 
 func rosterHandler(w http.ResponseWriter, r *http.Request) {
 	roster := currentRoster
-	if r.URL.Path == "/roster_score.json" {
-		roster = currentScores
-	}
 	w.Header().Set("Content-Type", "application/json")
 	b, err := json.Marshal(roster)
 	if err != nil {
@@ -119,6 +115,7 @@ func voteHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	if bytes.Compare(voteRoster.UUID, currentScores.UUID) == 0 {
 		currentScores.AddVotes(voteRoster)
+		currentRoster.CurrentVotes++
 	}
 }
 

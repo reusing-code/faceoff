@@ -59,12 +59,12 @@ func adminView() {
 }
 
 func bracketView() {
-	scoreRoster, err := getScoreRosterFromServer()
+	scoreRoster, err := getRosterFromServer()
 	if err != nil {
 		panic(err)
 	}
 
-	renderTemplate("bracket", nil)
+	renderTemplate("bracket", scoreRoster)
 	setActiveNavItem("bracket-link")
 
 	js.Global.Call("jQuery", "#bracket").Call("bracket", getBracketOptions(scoreRoster))

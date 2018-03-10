@@ -16,7 +16,7 @@ const bucketName = "BracketBucket"
 
 func OpenDB() error {
 	var err error
-	db, err = bolt.Open("my.db", 0644, nil)
+	db, err = bolt.Open("faceoff.db", 0644, nil)
 	if err != nil {
 		return err
 	}

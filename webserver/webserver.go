@@ -33,14 +33,15 @@ func main() {
 	SetRoster(scoreKey, currentRoster)
 
 	router := mux.NewRouter()
-	idxHndlGz := gziphandler.GzipHandler(http.HandlerFunc(indexHandler))
-	router.Handle("/", idxHndlGz)
-	router.Handle("/static/", gziphandler.GzipHandler(http.StripPrefix("/static/", http.FileServer(http.Dir("static")))))
+
+	router.PathPrefix("/static/").Handler(gziphandler.GzipHandler(http.StripPrefix("/static/", http.FileServer(http.Dir("static")))))
 	router.HandleFunc("/templates", templateHandler)
 	router.HandleFunc("/roster.json", rosterHandler)
 	router.HandleFunc("/submit-vote", voteHandler)
 	router.HandleFunc("/advance-round", roundAdvanceHandler)
 	router.HandleFunc("/commit-new-roster", newRosterHandler)
+	idxHndlGz := gziphandler.GzipHandler(http.HandlerFunc(indexHandler))
+	router.PathPrefix("/").Handler(idxHndlGz)
 
 	http.Handle("/", router)
 	log.Fatal(http.ListenAndServe(":"+strconv.Itoa(*port), nil))

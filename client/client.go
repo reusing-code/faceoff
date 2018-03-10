@@ -68,15 +68,6 @@ func getRosterFromServer() (*faceoff.Roster, error) {
 	return result, err
 }
 
-func getScoreRosterFromServer() (*faceoff.Roster, error) {
-	r, err := http.Get("/roster_score.json")
-	if err != nil {
-		return nil, err
-	}
-	result, err := faceoff.ParseRoster(r.Body)
-	return result, err
-}
-
 func commitNewRoster(contestants []string) {
 	marshalled, err := json.Marshal(contestants)
 	if err != nil {

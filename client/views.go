@@ -26,14 +26,16 @@ func adminView() {
 		panic(err)
 	}
 
-	currentRound := len(remoteRoster.Rounds) - 1
-	contenderCount := len(remoteRoster.Rounds[currentRound].Matches) * 2
+	contenderCount := 0
+	if remoteRoster.ActiveRound >= 0 {
+		contenderCount = len(remoteRoster.Rounds[remoteRoster.ActiveRound].Matches) * 2
+	}
 
 	data := struct {
 		Round          int
 		ContenderCount int
 	}{
-		currentRound + 1,
+		remoteRoster.ActiveRound + 1,
 		contenderCount,
 	}
 
@@ -42,14 +44,13 @@ func adminView() {
 	setActiveNavItem("admin-link")
 
 	d := dom.GetWindow().Document()
-	btnA := d.GetElementByID("btn-advance-round").(*dom.HTMLButtonElement)
-	if contenderCount > 2 {
+
+	if remoteRoster.ActiveRound >= 0 {
+		btnA := d.GetElementByID("btn-advance-round").(*dom.HTMLButtonElement)
 		btnA.AddEventListener("click", false, func(event dom.Event) {
 			go http.Post("/advance-round", "POST", bytes.NewReader(remoteRoster.UUID))
 			route("/bracket", true)
 		})
-	} else {
-		btnA.Disabled = true
 	}
 
 	btnNew := d.GetElementByID("btn-new-tournament").(*dom.HTMLButtonElement)
@@ -59,12 +60,12 @@ func adminView() {
 }
 
 func bracketView() {
-	scoreRoster, err := getScoreRosterFromServer()
+	scoreRoster, err := getRosterFromServer()
 	if err != nil {
 		panic(err)
 	}
 
-	renderTemplate("bracket", nil)
+	renderTemplate("bracket", scoreRoster)
 	setActiveNavItem("bracket-link")
 
 	js.Global.Call("jQuery", "#bracket").Call("bracket", getBracketOptions(scoreRoster))

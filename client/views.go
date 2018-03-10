@@ -223,6 +223,31 @@ func showContestantInputs(count int) {
 	})
 }
 
+func bracketCreatedView(newID string) {
+	locstor.SetItem("currentBracket", newID)
+
+	url := dom.GetWindow().Location().Origin + "/" + newID
+	data := struct {
+		Name string
+		ID   string
+		URL  string
+	}{
+		Name: "",
+		ID:   newID,
+		URL:  url,
+	}
+	renderTemplate("bracketcreated", data)
+	d := dom.GetWindow().Document()
+	btncpy := d.GetElementByID("btn-cpy").(*dom.HTMLButtonElement)
+	btncpy.AddEventListener("click", false, func(event dom.Event) {
+		dummy := d.GetElementByID("url-cpy-dummy").(*dom.HTMLInputElement)
+		dummy.Class().Remove("invisible")
+		dummy.Select()
+		d.Underlying().Call("execCommand", "Copy")
+		dummy.Class().Add("invisible")
+	})
+}
+
 func renderTemplate(templateName string, data interface{}) {
 	t := template.New("base")
 	t = template.Must(t.Parse(ts.Templates["layout/base"]))

@@ -1,0 +1,13 @@
+{{define "content"}}
+<div id="stats">
+    <h3>Wettbewerb '{{ .Name }}' erfolgreich erstellt!</h3>
+    <p>Wettbewerb Code: <span class="badge badge-secondary">{{ .ID }}</span></p>
+    <p>Link: <span class="badge badge-secondary h3">{{ .URL }}</span> 
+        <button id="btn-cpy" type="button" class="btn btn-outline-primary btn-sm">Link kopieren</button>
+    </p>
+</div>
+<div class="form-group">
+    <button id="btn-goto-bracket" class="btn btn btn-secondary btn-lg btn-block my-3">Zum Wettbewerb</button>
+</div>
+<div><input id="url-cpy-dummy" class="invisible" type=text value="{{ .URL }}"></div>
+{{end}}

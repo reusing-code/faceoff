@@ -74,6 +74,18 @@ func commitNewRoster(contestants []string) {
 		println(err)
 		return
 	}
-	http.Post("/commit-new-roster", "POST", bytes.NewReader(marshalled))
-	route("/", true)
+	r, err := http.Post("/commit-new-roster", "POST", bytes.NewReader(marshalled))
+	if err != nil {
+		println(err)
+		return
+	}
+
+	if r.StatusCode != http.StatusOK {
+		println("commitNewRoster: unsuccsessful reply")
+		return
+	}
+	buf := &bytes.Buffer{}
+	buf.ReadFrom(r.Body)
+	r.Body.Close()
+	bracketCreatedView(buf.String())
 }

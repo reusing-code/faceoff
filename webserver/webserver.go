@@ -11,6 +11,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/gorilla/mux"
+
 	"github.com/reusing-code/faceoff"
 
 	"github.com/NYTimes/gziphandler"
@@ -30,15 +32,17 @@ func main() {
 	SetRoster(rosterKey, currentRoster)
 	SetRoster(scoreKey, currentRoster)
 
+	router := mux.NewRouter()
 	idxHndlGz := gziphandler.GzipHandler(http.HandlerFunc(indexHandler))
-	http.Handle("/", idxHndlGz)
-	http.Handle("/static/", gziphandler.GzipHandler(http.StripPrefix("/static/", http.FileServer(http.Dir("static")))))
-	http.HandleFunc("/templates", templateHandler)
-	http.HandleFunc("/roster.json", rosterHandler)
-	http.HandleFunc("/submit-vote", voteHandler)
-	http.HandleFunc("/advance-round", roundAdvanceHandler)
-	http.HandleFunc("/commit-new-roster", newRosterHandler)
+	router.Handle("/", idxHndlGz)
+	router.Handle("/static/", gziphandler.GzipHandler(http.StripPrefix("/static/", http.FileServer(http.Dir("static")))))
+	router.HandleFunc("/templates", templateHandler)
+	router.HandleFunc("/roster.json", rosterHandler)
+	router.HandleFunc("/submit-vote", voteHandler)
+	router.HandleFunc("/advance-round", roundAdvanceHandler)
+	router.HandleFunc("/commit-new-roster", newRosterHandler)
 
+	http.Handle("/", router)
 	log.Fatal(http.ListenAndServe(":"+strconv.Itoa(*port), nil))
 }
 

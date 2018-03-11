@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/gopherjs/gopherjs/js"
@@ -64,6 +65,10 @@ func getRosterFromServer() (*faceoff.Roster, error) {
 	if err != nil {
 		return nil, err
 	}
+	if r.StatusCode == http.StatusNotFound {
+		println("404")
+		return nil, fmt.Errorf("404")
+	}
 	result, err := faceoff.ParseRoster(r.Body)
 	return result, err
 }
@@ -91,6 +96,9 @@ func commitNewRoster(contestants []string) {
 }
 
 func createParameterizedRequestURL(ressoure string) string {
-	currentKey, _ := locstor.GetItem("currentBracket")
+	currentKey, err := locstor.GetItem("currentBracketKey")
+	if err != nil {
+		currentKey = "0"
+	}
 	return "/xhr/" + currentKey + ressoure
 }

@@ -105,15 +105,18 @@ func rosterHandler(w http.ResponseWriter, r *http.Request) {
 	roster, err := GetRoster(key)
 	if err != nil {
 		handleNotFound(w, r)
+		return
 	}
 	w.Header().Set("Content-Type", "application/json")
 	b, err := json.Marshal(roster)
 	if err != nil {
 		handleError(w, err)
+		return
 	}
 	_, err = w.Write(b)
 	if err != nil {
 		handleError(w, err)
+		return
 	}
 }
 

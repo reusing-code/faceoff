@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"html/template"
+	"math/rand"
 	"net/http"
 	"strconv"
 	"strings"
@@ -219,6 +220,11 @@ func showContestantInputs(count int) {
 		contestants[0] = d.GetElementByID("name-input").(*dom.HTMLInputElement).Value
 		for i, input := range d.GetElementsByClassName("contestant-input") {
 			contestants[i+1] = input.(*dom.HTMLInputElement).Value
+		}
+		if d.GetElementByID("randomize-input").(*dom.HTMLInputElement).Checked {
+			rand.Shuffle(count, func(i, j int) {
+				contestants[i], contestants[j] = contestants[j], contestants[i]
+			})
 		}
 		go commitNewRoster(contestants)
 	})

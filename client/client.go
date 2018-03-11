@@ -87,5 +87,5 @@ func commitNewRoster(contestants []string) {
 	buf := &bytes.Buffer{}
 	buf.ReadFrom(r.Body)
 	r.Body.Close()
-	bracketCreatedView(buf.String())
+	bracketCreatedView(contestants[0], buf.String())
 }

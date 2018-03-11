@@ -92,7 +92,7 @@ func createRoster(filename string) *faceoff.Roster {
 	if err != nil {
 		panic(err)
 	}
-	r, err := faceoff.CreateRosterRaw(b)
+	r, err := faceoff.CreateRosterRaw("Default", b)
 	if err != nil {
 		panic(err)
 	}
@@ -172,13 +172,20 @@ func newRosterHandler(w http.ResponseWriter, r *http.Request) {
 
 	participants := make([]string, 0)
 	json.Unmarshal(b.Bytes(), &participants)
+	if len(participants) < 1 {
+		println("Bad data in /commit-new-roster: slice empty")
+		return
+	}
 
-	roster, err := faceoff.CreateRoster(participants)
+	roster, err := faceoff.CreateRoster(participants[0], participants[1:])
 	if err != nil {
 		println("Bad data in /commit-new-roster: " + err.Error())
 		return
 	}
-	SetRoster(rosterKey, roster)
-	SetRoster(scoreKey, roster)
+	key := CreateKey()
+	SetRoster(key, roster)
+	SetRoster(key, roster)
+
+	w.Write([]byte(key))
 
 }

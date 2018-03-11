@@ -215,15 +215,16 @@ func showContestantInputs(count int) {
 		if !result {
 			return
 		}
-		contestants := make([]string, count)
+		contestants := make([]string, count+1)
+		contestants[0] = d.GetElementByID("name-input").(*dom.HTMLInputElement).Value
 		for i, input := range d.GetElementsByClassName("contestant-input") {
-			contestants[i] = input.(*dom.HTMLInputElement).Value
+			contestants[i+1] = input.(*dom.HTMLInputElement).Value
 		}
 		go commitNewRoster(contestants)
 	})
 }
 
-func bracketCreatedView(newID string) {
+func bracketCreatedView(name string, newID string) {
 	locstor.SetItem("currentBracket", newID)
 
 	url := dom.GetWindow().Location().Origin + "/" + newID
@@ -232,7 +233,7 @@ func bracketCreatedView(newID string) {
 		ID   string
 		URL  string
 	}{
-		Name: "",
+		Name: name,
 		ID:   newID,
 		URL:  url,
 	}

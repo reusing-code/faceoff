@@ -4,6 +4,9 @@ import (
 	"bytes"
 	"encoding/gob"
 	"fmt"
+	"math/rand"
+	"strconv"
+	"time"
 
 	"github.com/reusing-code/faceoff"
 
@@ -13,6 +16,10 @@ import (
 var db *bolt.DB
 
 const bucketName = "BracketBucket"
+
+func init() {
+	rand.Seed(time.Now().UTC().UnixNano())
+}
 
 func OpenDB() error {
 	var err error
@@ -36,13 +43,7 @@ func CloseDB() error {
 }
 
 func GetRoster(id string) (*faceoff.Roster, error) {
-	key := []byte(id)
-	var value []byte
-	err := db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(bucketName))
-		value = b.Get([]byte(key))
-		return nil
-	})
+	value, err := GetValue(id)
 	if value == nil || err != nil {
 		return nil, fmt.Errorf("No key '%s' in DB", id)
 	}
@@ -51,6 +52,17 @@ func GetRoster(id string) (*faceoff.Roster, error) {
 	dec := gob.NewDecoder(bytes.NewReader(value))
 	err = dec.Decode(result)
 	return result, err
+}
+
+func GetValue(id string) ([]byte, error) {
+	key := []byte(id)
+	var value []byte
+	err := db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(bucketName))
+		value = b.Get([]byte(key))
+		return nil
+	})
+	return value, err
 }
 
 func SetRoster(id string, roster *faceoff.Roster) error {
@@ -69,4 +81,17 @@ func SetRoster(id string, roster *faceoff.Roster) error {
 		return err
 	})
 	return err
+}
+
+func CreateKey() string {
+	var rnd int
+	for rnd < 10000000 {
+		rnd = rand.Intn(100000000)
+	}
+	id := strconv.Itoa(rnd)
+	value, _ := GetValue(id)
+	if value != nil {
+		return CreateKey()
+	}
+	return id
 }

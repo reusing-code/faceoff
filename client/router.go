@@ -46,7 +46,6 @@ func route(path string, addToHistory bool) {
 		bracketValid := err == nil
 
 		if !bracketValid {
-			println("bracketInvalid")
 			if addToHistory {
 				history := js.Global.Get("history")
 				history.Call("replaceState", nil, "", "/welcome")

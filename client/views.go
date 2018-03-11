@@ -247,6 +247,12 @@ func bracketCreatedView(name string, newID string) {
 		d.Underlying().Call("execCommand", "Copy")
 		dummy.Class().Add("invisible")
 	})
+
+	btncontest := d.GetElementByID("btn-goto-bracket").(*dom.HTMLButtonElement)
+	btncontest.AddEventListener("click", false, func(event dom.Event) {
+		route("/bracket", true)
+	})
+
 }
 
 func welcomeView() {

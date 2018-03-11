@@ -18,19 +18,11 @@ import (
 	"github.com/NYTimes/gziphandler"
 )
 
-const rosterKey = "testKey"
-const scoreKey = "scoreKey"
-
 func main() {
 	port := flag.Int("p", 8086, "port number")
 	flag.Parse()
 
 	OpenDB()
-
-	currentRoster := createRoster("values.txt")
-
-	SetRoster(rosterKey, currentRoster)
-	SetRoster(scoreKey, currentRoster)
 
 	router := mux.NewRouter()
 	xhr := router.PathPrefix("/xhr/{key:[0-9]+}").Subrouter()
@@ -65,7 +57,6 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func templateHandler(w http.ResponseWriter, r *http.Request) {
-
 	ts, err := faceoff.LoadTemplatesFromDisk()
 	if err == nil {
 		var gob []byte
@@ -80,7 +71,6 @@ func templateHandler(w http.ResponseWriter, r *http.Request) {
 
 	handleError(w, err)
 	return
-
 }
 
 func createRoster(filename string) *faceoff.Roster {
@@ -136,14 +126,19 @@ func voteHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		return
 	}
-	scoreRoster, err := GetRoster(key)
+	scoreRoster, err := GetRoster(scoreKey(key))
+	if err != nil {
+		return
+	}
+	roster, err := GetRoster(key)
 	if err != nil {
 		return
 	}
 	if bytes.Compare(voteRoster.UUID, scoreRoster.UUID) == 0 {
 		scoreRoster.AddVotes(voteRoster)
-		scoreRoster.CurrentVotes++
-		SetRoster(scoreKey, scoreRoster)
+		roster.CurrentVotes++
+		SetRoster(scoreKey(key), scoreRoster)
+		SetRoster(key, roster)
 	}
 }
 
@@ -157,14 +152,14 @@ func roundAdvanceHandler(w http.ResponseWriter, r *http.Request) {
 	b.ReadFrom(r.Body)
 	id := b.Bytes()
 	r.Body.Close()
-	scoreRoster, err := GetRoster(key)
+	scoreRoster, err := GetRoster(scoreKey(key))
 	if err != nil {
 		return
 	}
 	if bytes.Compare(id, scoreRoster.UUID) == 0 {
 		scoreRoster.AdvanceRound()
 		SetRoster(key, scoreRoster)
-		SetRoster(key, scoreRoster)
+		SetRoster(scoreKey(key), scoreRoster)
 	}
 }
 
@@ -191,8 +186,12 @@ func newRosterHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	key := CreateKey()
 	SetRoster(key, roster)
-	SetRoster(key, roster)
+	SetRoster(scoreKey(key), roster)
 
 	w.Write([]byte(key))
 
+}
+
+func scoreKey(key string) string {
+	return key + "_score"
 }

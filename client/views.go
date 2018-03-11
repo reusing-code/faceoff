@@ -158,7 +158,7 @@ func showVotingFinished() {
 			if err != nil {
 				panic(err)
 			}
-			r, err := http.Post(createParameterizedRequestURL("submit-vote"), "application/json", strings.NewReader(roster))
+			r, err := http.Post(createParameterizedRequestURL("/submit-vote"), "application/json", strings.NewReader(roster))
 			if err != nil {
 				panic(err)
 			}

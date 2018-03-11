@@ -223,7 +223,7 @@ func showContestantInputs(count int) {
 		}
 		if d.GetElementByID("randomize-input").(*dom.HTMLInputElement).Checked {
 			rand.Shuffle(count, func(i, j int) {
-				contestants[i], contestants[j] = contestants[j], contestants[i]
+				contestants[i+1], contestants[j+1] = contestants[j+1], contestants[i+1]
 			})
 		}
 		go commitNewRoster(contestants)

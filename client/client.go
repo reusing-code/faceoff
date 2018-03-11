@@ -60,7 +60,7 @@ func loadRoster() (*faceoff.Roster, error) {
 }
 
 func getRosterFromServer() (*faceoff.Roster, error) {
-	r, err := http.Get("/roster.json")
+	r, err := http.Get(createParameterizedRequestURL("/roster.json"))
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +74,7 @@ func commitNewRoster(contestants []string) {
 		println(err)
 		return
 	}
-	r, err := http.Post("/commit-new-roster", "POST", bytes.NewReader(marshalled))
+	r, err := http.Post(createParameterizedRequestURL("/commit-new-roster"), "POST", bytes.NewReader(marshalled))
 	if err != nil {
 		println(err)
 		return
@@ -88,4 +88,9 @@ func commitNewRoster(contestants []string) {
 	buf.ReadFrom(r.Body)
 	r.Body.Close()
 	bracketCreatedView(contestants[0], buf.String())
+}
+
+func createParameterizedRequestURL(ressoure string) string {
+	currentKey, _ := locstor.GetItem("currentBracket")
+	return "/xhr/" + currentKey + ressoure
 }

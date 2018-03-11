@@ -1,6 +1,10 @@
 package main
 
 import (
+	"strconv"
+	"strings"
+
+	"github.com/go-humble/locstor"
 	"github.com/gopherjs/gopherjs/js"
 	"honnef.co/go/js/dom"
 )
@@ -12,6 +16,13 @@ func route(path string, addToHistory bool) {
 
 	if path == "" || path == "/" {
 		path = "/bracket"
+	} else {
+		stripped := strings.Replace(path, "/", "", -1)
+		_, err := strconv.Atoi(stripped)
+		if err == nil {
+			locstor.SetItem("currentBracket", stripped)
+			path = "/bracket"
+		}
 	}
 
 	if addToHistory {

@@ -28,11 +28,23 @@ type Match struct {
 	Winner     Contender
 }
 
+type Round struct {
+	Matches []*Match
+}
+
+type Roster struct {
+	UUID         []byte
+	Rounds       []*Round
+	CurrentVotes int
+	ActiveRound  int
+	Name         string
+}
+
 func init() {
 	rand.Seed(time.Now().UTC().UnixNano())
 }
 
-func CreateRosterRaw(participants []byte) (*Roster, error) {
+func CreateRosterRaw(name string, participants []byte) (*Roster, error) {
 	buf := bufio.NewScanner(bytes.NewReader(participants))
 	partSlice := make([]string, 0, 16)
 	for buf.Scan() {
@@ -41,17 +53,17 @@ func CreateRosterRaw(participants []byte) (*Roster, error) {
 			partSlice = append(partSlice, name)
 		}
 	}
-	return CreateRoster(partSlice)
+	return CreateRoster(name, partSlice)
 }
 
-func CreateRoster(participants []string) (*Roster, error) {
+func CreateRoster(name string, participants []string) (*Roster, error) {
 	l := len(participants)
 	// very ugly, but good enough for now
 	if l != 2 && l != 4 && l != 8 && l != 16 && l != 32 {
 		return nil, errors.New("Unsupported participant number")
 	}
 
-	res := &Roster{Rounds: make([]*Round, 0)}
+	res := &Roster{Rounds: make([]*Round, 0), Name: name}
 	round := &Round{}
 
 	round.Matches = generateMatches(participants)
@@ -85,17 +97,6 @@ func (m *Match) checkWinner() {
 	} else {
 		m.Winner = NONE
 	}
-}
-
-type Round struct {
-	Matches []*Match
-}
-
-type Roster struct {
-	UUID         []byte
-	Rounds       []*Round
-	CurrentVotes int
-	ActiveRound  int
 }
 
 func (r *Roster) DeepCopy() *Roster {

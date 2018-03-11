@@ -49,8 +49,10 @@ func adminView() {
 	if remoteRoster.ActiveRound >= 0 {
 		btnA := d.GetElementByID("btn-advance-round").(*dom.HTMLButtonElement)
 		btnA.AddEventListener("click", false, func(event dom.Event) {
-			go http.Post("/advance-round", "POST", bytes.NewReader(remoteRoster.UUID))
-			route("/bracket", true)
+			go func() {
+				http.Post(createParameterizedRequestURL("/advance-round"), "POST", bytes.NewReader(remoteRoster.UUID))
+				route("/bracket", true)
+			}()
 		})
 	}
 
@@ -156,7 +158,7 @@ func showVotingFinished() {
 			if err != nil {
 				panic(err)
 			}
-			r, err := http.Post("submit-vote", "application/json", strings.NewReader(roster))
+			r, err := http.Post(createParameterizedRequestURL("/submit-vote"), "application/json", strings.NewReader(roster))
 			if err != nil {
 				panic(err)
 			}
@@ -214,17 +216,67 @@ func showContestantInputs(count int) {
 		if !result {
 			return
 		}
-		contestants := make([]string, count)
+		contestants := make([]string, count+1)
+		contestants[0] = d.GetElementByID("name-input").(*dom.HTMLInputElement).Value
 		for i, input := range d.GetElementsByClassName("contestant-input") {
-			contestants[i] = input.(*dom.HTMLInputElement).Value
+			contestants[i+1] = input.(*dom.HTMLInputElement).Value
 		}
 		if d.GetElementByID("randomize-input").(*dom.HTMLInputElement).Checked {
 			rand.Shuffle(count, func(i, j int) {
-				contestants[i], contestants[j] = contestants[j], contestants[i]
+				contestants[i+1], contestants[j+1] = contestants[j+1], contestants[i+1]
 			})
 		}
 		go commitNewRoster(contestants)
 	})
+}
+
+func bracketCreatedView(name string, newID string) {
+	locstor.SetItem("currentBracketKey", newID)
+
+	url := dom.GetWindow().Location().Origin + "/" + newID
+	data := struct {
+		Name string
+		ID   string
+		URL  string
+	}{
+		Name: name,
+		ID:   newID,
+		URL:  url,
+	}
+	renderTemplate("bracketcreated", data)
+	d := dom.GetWindow().Document()
+	btncpy := d.GetElementByID("btn-cpy").(*dom.HTMLButtonElement)
+	btncpy.AddEventListener("click", false, func(event dom.Event) {
+		dummy := d.GetElementByID("url-cpy-dummy").(*dom.HTMLInputElement)
+		dummy.Class().Remove("invisible")
+		dummy.Select()
+		d.Underlying().Call("execCommand", "Copy")
+		dummy.Class().Add("invisible")
+	})
+
+	btncontest := d.GetElementByID("btn-goto-bracket").(*dom.HTMLButtonElement)
+	btncontest.AddEventListener("click", false, func(event dom.Event) {
+		route("/bracket", true)
+	})
+
+}
+
+func welcomeView() {
+	locstor.RemoveItem("currentBracketKey")
+	renderTemplate("welcome", nil)
+	d := dom.GetWindow().Document()
+	d.GetElementByID("button-new-bracket").(*dom.HTMLButtonElement).AddEventListener("click", false, func(event dom.Event) {
+		route("/new", true)
+	})
+
+	d.GetElementByID("button-submit-key").(*dom.HTMLButtonElement).AddEventListener("click", false, func(event dom.Event) {
+		event.PreventDefault()
+		key := d.GetElementByID("input-key").(*dom.HTMLInputElement).Value
+		key = strings.TrimSpace(key)
+		locstor.SetItem("currentBracketKey", key)
+		route("/bracket", true)
+	})
+
 }
 
 func renderTemplate(templateName string, data interface{}) {

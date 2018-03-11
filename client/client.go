@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/gopherjs/gopherjs/js"
@@ -60,9 +61,12 @@ func loadRoster() (*faceoff.Roster, error) {
 }
 
 func getRosterFromServer() (*faceoff.Roster, error) {
-	r, err := http.Get("/roster.json")
+	r, err := http.Get(createParameterizedRequestURL("/roster.json"))
 	if err != nil {
 		return nil, err
+	}
+	if r.StatusCode == http.StatusNotFound {
+		return nil, fmt.Errorf("404")
 	}
 	result, err := faceoff.ParseRoster(r.Body)
 	return result, err
@@ -74,6 +78,26 @@ func commitNewRoster(contestants []string) {
 		println(err)
 		return
 	}
-	http.Post("/commit-new-roster", "POST", bytes.NewReader(marshalled))
-	route("/", true)
+	r, err := http.Post(createParameterizedRequestURL("/commit-new-roster"), "POST", bytes.NewReader(marshalled))
+	if err != nil {
+		println(err)
+		return
+	}
+
+	if r.StatusCode != http.StatusOK {
+		println("commitNewRoster: unsuccsessful reply")
+		return
+	}
+	buf := &bytes.Buffer{}
+	buf.ReadFrom(r.Body)
+	r.Body.Close()
+	bracketCreatedView(contestants[0], buf.String())
+}
+
+func createParameterizedRequestURL(ressoure string) string {
+	currentKey, err := locstor.GetItem("currentBracketKey")
+	if err != nil {
+		currentKey = "0"
+	}
+	return "/xhr/" + currentKey + ressoure
 }

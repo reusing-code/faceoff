@@ -66,7 +66,6 @@ func getRosterFromServer() (*faceoff.Roster, error) {
 		return nil, err
 	}
 	if r.StatusCode == http.StatusNotFound {
-		println("404")
 		return nil, fmt.Errorf("404")
 	}
 	result, err := faceoff.ParseRoster(r.Body)

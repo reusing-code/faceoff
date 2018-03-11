@@ -33,13 +33,14 @@ func main() {
 	SetRoster(scoreKey, currentRoster)
 
 	router := mux.NewRouter()
+	xhr := router.PathPrefix("/xhr/{key:[0-9]+}").Subrouter()
+	xhr.HandleFunc("/roster.json", rosterHandler)
+	xhr.HandleFunc("/submit-vote", voteHandler)
+	xhr.HandleFunc("/advance-round", roundAdvanceHandler)
+	xhr.HandleFunc("/commit-new-roster", newRosterHandler)
 
-	router.PathPrefix("/static/").Handler(gziphandler.GzipHandler(http.StripPrefix("/static/", http.FileServer(http.Dir("static")))))
 	router.HandleFunc("/templates", templateHandler)
-	router.HandleFunc("/roster.json", rosterHandler)
-	router.HandleFunc("/submit-vote", voteHandler)
-	router.HandleFunc("/advance-round", roundAdvanceHandler)
-	router.HandleFunc("/commit-new-roster", newRosterHandler)
+	router.PathPrefix("/static/").Handler(gziphandler.GzipHandler(http.StripPrefix("/static/", http.FileServer(http.Dir("static")))))
 	idxHndlGz := gziphandler.GzipHandler(http.HandlerFunc(indexHandler))
 	router.PathPrefix("/").Handler(idxHndlGz)
 
@@ -100,7 +101,8 @@ func createRoster(filename string) *faceoff.Roster {
 }
 
 func rosterHandler(w http.ResponseWriter, r *http.Request) {
-	roster, err := GetRoster(rosterKey)
+	key := mux.Vars(r)["key"]
+	roster, err := GetRoster(key)
 	if err != nil {
 		handleNotFound(w, r)
 	}
@@ -126,11 +128,12 @@ func handleNotFound(w http.ResponseWriter, r *http.Request) {
 }
 
 func voteHandler(w http.ResponseWriter, r *http.Request) {
+	key := mux.Vars(r)["key"]
 	voteRoster, err := faceoff.ParseRoster(r.Body)
 	if err != nil {
 		return
 	}
-	scoreRoster, err := GetRoster(scoreKey)
+	scoreRoster, err := GetRoster(key)
 	if err != nil {
 		return
 	}
@@ -142,6 +145,7 @@ func voteHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func roundAdvanceHandler(w http.ResponseWriter, r *http.Request) {
+	key := mux.Vars(r)["key"]
 	if r.Method != "POST" {
 		println("/advance-round called with " + r.Method + ". Ignoring")
 		return
@@ -150,14 +154,14 @@ func roundAdvanceHandler(w http.ResponseWriter, r *http.Request) {
 	b.ReadFrom(r.Body)
 	id := b.Bytes()
 	r.Body.Close()
-	scoreRoster, err := GetRoster(scoreKey)
+	scoreRoster, err := GetRoster(key)
 	if err != nil {
 		return
 	}
 	if bytes.Compare(id, scoreRoster.UUID) == 0 {
 		scoreRoster.AdvanceRound()
-		SetRoster(rosterKey, scoreRoster)
-		SetRoster(scoreKey, scoreRoster)
+		SetRoster(key, scoreRoster)
+		SetRoster(key, scoreRoster)
 	}
 }
 

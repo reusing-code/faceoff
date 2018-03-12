@@ -31,6 +31,7 @@ func main() {
 	xhr.HandleFunc("/advance-round", roundAdvanceHandler)
 	xhr.HandleFunc("/commit-new-roster", newRosterHandler)
 
+	router.HandleFunc("/ws", serveWs)
 	router.HandleFunc("/templates", templateHandler)
 	router.PathPrefix("/static/").Handler(gziphandler.GzipHandler(http.StripPrefix("/static/", http.FileServer(http.Dir("static")))))
 	idxHndlGz := gziphandler.GzipHandler(http.HandlerFunc(indexHandler))

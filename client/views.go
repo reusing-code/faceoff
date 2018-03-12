@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/gopherjs/websocket/websocketjs"
+
 	"github.com/go-humble/locstor"
 	"github.com/gopherjs/gopherjs/js"
 	"github.com/reusing-code/faceoff"
@@ -70,6 +72,16 @@ func bracketView(remoteRoster *faceoff.Roster) {
 	btnB := dom.GetWindow().Document().GetElementByID("btn-bracket").(*dom.HTMLButtonElement)
 	btnB.AddEventListener("click", false, func(event dom.Event) {
 		route("/bracket", false)
+	})
+
+	ws, err := websocketjs.New("ws://" + dom.GetWindow().Location().Hostname + ":" + dom.GetWindow().Location().Port + "/ws")
+	if err != nil {
+		println(err)
+	}
+
+	ws.AddEventListener("message", false, func(ev *js.Object) {
+		data := ev.Get("data").Interface().([]byte)
+		println(string(data))
 	})
 
 }

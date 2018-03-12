@@ -4,10 +4,14 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/reusing-code/faceoff"
+
 	"github.com/go-humble/locstor"
 	"github.com/gopherjs/gopherjs/js"
 	"honnef.co/go/js/dom"
 )
+
+type viewFunc func(bracket *faceoff.Roster)
 
 func route(path string, addToHistory bool) {
 	if path == "" {
@@ -30,41 +34,36 @@ func route(path string, addToHistory bool) {
 		history.Call("pushState", nil, "", path)
 	}
 
-	// Routes not requiring valid bracket
 	if path == "/welcome" {
 		go welcomeView()
 		return
 	} else if path == "/new" {
 		go newBracketView()
 		return
+	} else if path == "/admin" {
+		go routeWithBracket(adminView)
+		return
+	} else if path == "/vote" {
+		go routeWithBracket(votingView)
+		return
+	} else {
+		go routeWithBracket(bracketView)
+		return
 	}
 
-	// Routes requiring valid current bracket
-	go func() {
-		_, err := getRosterFromServer()
+}
 
-		bracketValid := err == nil
+func routeWithBracket(view viewFunc) {
+	roster, err := getRosterFromServer()
 
-		if !bracketValid {
-			if addToHistory {
-				history := js.Global.Get("history")
-				history.Call("replaceState", nil, "", "/welcome")
-			}
-			route("/welcome", false)
-			return
-		}
+	bracketValid := err == nil
 
-		if path == "/admin" {
-			go adminView()
-			return
-		} else if path == "/vote" {
-			go votingView()
-			return
-		} else {
-			go bracketView()
-			return
-		}
-	}()
+	if !bracketValid {
+		route("/welcome", true)
+		return
+	}
+
+	view(roster)
 }
 
 func setActiveNavItem(id string) {

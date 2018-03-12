@@ -21,12 +21,7 @@ type matchViewData struct {
 	MatchNum   int
 }
 
-func adminView() {
-	remoteRoster, err := getRosterFromServer()
-	if err != nil {
-		panic(err)
-	}
-
+func adminView(remoteRoster *faceoff.Roster) {
 	contenderCount := 0
 	if remoteRoster.ActiveRound >= 0 {
 		contenderCount = len(remoteRoster.Rounds[remoteRoster.ActiveRound].Matches) * 2
@@ -62,16 +57,11 @@ func adminView() {
 	})
 }
 
-func bracketView() {
-	scoreRoster, err := getRosterFromServer()
-	if err != nil {
-		panic(err)
-	}
-
-	renderTemplate("bracket", scoreRoster)
+func bracketView(remoteRoster *faceoff.Roster) {
+	renderTemplate("bracket", remoteRoster)
 	setActiveNavItem("bracket-link")
 
-	js.Global.Call("jQuery", "#bracket").Call("bracket", getBracketOptions(scoreRoster))
+	js.Global.Call("jQuery", "#bracket").Call("bracket", getBracketOptions(remoteRoster))
 
 	btnA := dom.GetWindow().Document().GetElementByID("btn-vote").(*dom.HTMLButtonElement)
 	btnA.AddEventListener("click", false, func(event dom.Event) {
@@ -84,14 +74,9 @@ func bracketView() {
 
 }
 
-func votingView() {
-	remoteRoster, err := getRosterFromServer()
-	if err != nil {
-		panic(err)
-	}
+func votingView(remoteRoster *faceoff.Roster) {
 	localRoster, err := loadRoster()
 	if err != nil {
-		println(err)
 		localRoster = nil
 	}
 

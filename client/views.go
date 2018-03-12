@@ -80,8 +80,8 @@ func bracketView(remoteRoster *faceoff.Roster) {
 	}
 
 	ws.AddEventListener("message", false, func(ev *js.Object) {
-		data := ev.Get("data").Interface().([]byte)
-		println(string(data))
+		data := ev.Get("data").Interface().(string)
+		println(data)
 	})
 
 }

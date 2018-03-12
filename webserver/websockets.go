@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -38,10 +37,10 @@ func writer(ws *websocket.Conn) {
 		pingTicker.Stop()
 		ws.Close()
 	}()
+	ws.WriteMessage(websocket.TextMessage, []byte("Test message"))
 	for {
 		select {
 		case <-pingTicker.C:
-			fmt.Println("ping")
 			if err := ws.WriteMessage(websocket.PingMessage, []byte{}); err != nil {
 				return
 			}
@@ -53,7 +52,7 @@ func reader(ws *websocket.Conn) {
 	defer ws.Close()
 	ws.SetReadLimit(512)
 	ws.SetReadDeadline(time.Now().Add(pongWait))
-	ws.SetPongHandler(func(string) error { ws.SetReadDeadline(time.Now().Add(pongWait)); fmt.Println("pong"); return nil })
+	ws.SetPongHandler(func(string) error { ws.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 	for {
 		_, _, err := ws.ReadMessage()
 		if err != nil {

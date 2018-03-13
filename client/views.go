@@ -74,16 +74,20 @@ func bracketView(remoteRoster *faceoff.Roster) {
 		route("/bracket", false)
 	})
 
-	ws, err := websocketjs.New("ws://" + dom.GetWindow().Location().Hostname + ":" + dom.GetWindow().Location().Port + "/ws")
-	if err != nil {
-		println(err)
+	var err error
+	if websocket == nil {
+		websocket, err = websocketjs.New(getWebsocketURL())
+		if err != nil {
+			println(err)
+		}
+
+		websocket.AddEventListener("message", false, func(ev *js.Object) {
+			data := ev.Get("data").Interface().(string)
+			if data == "refresh" {
+				route("/bracket", false)
+			}
+		})
 	}
-
-	ws.AddEventListener("message", false, func(ev *js.Object) {
-		data := ev.Get("data").Interface().(string)
-		println(data)
-	})
-
 }
 
 func votingView(remoteRoster *faceoff.Roster) {
@@ -228,7 +232,7 @@ func showContestantInputs(count int) {
 }
 
 func bracketCreatedView(name string, newID string) {
-	locstor.SetItem("currentBracketKey", newID)
+	setCurrentBracket(newID)
 
 	url := dom.GetWindow().Location().Origin + "/" + newID
 	data := struct {
@@ -259,7 +263,7 @@ func bracketCreatedView(name string, newID string) {
 }
 
 func welcomeView() {
-	locstor.RemoveItem("currentBracketKey")
+	setCurrentBracket("")
 	renderTemplate("welcome", nil)
 	d := dom.GetWindow().Document()
 	d.GetElementByID("button-new-bracket").(*dom.HTMLButtonElement).AddEventListener("click", false, func(event dom.Event) {
@@ -270,7 +274,7 @@ func welcomeView() {
 		event.PreventDefault()
 		key := d.GetElementByID("input-key").(*dom.HTMLInputElement).Value
 		key = strings.TrimSpace(key)
-		locstor.SetItem("currentBracketKey", key)
+		setCurrentBracket(key)
 		route("/bracket", true)
 	})
 

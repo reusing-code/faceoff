@@ -89,7 +89,6 @@ func writer(conn *websocketConnection) {
 	for {
 		select {
 		case <-pingTicker.C:
-			fmt.Printf("%p: ping\n", conn.ws)
 			conn.ws.SetWriteDeadline(time.Now().Add(pongWait))
 			if err := conn.ws.WriteMessage(websocket.PingMessage, []byte{}); err != nil {
 				return
@@ -110,7 +109,6 @@ func reader(conn *websocketConnection) {
 	conn.ws.SetReadDeadline(time.Now().Add(pongWait))
 	conn.ws.SetPongHandler(func(string) error {
 		conn.ws.SetReadDeadline(time.Now().Add(pongWait))
-		fmt.Printf("%p: pong\n", conn.ws)
 		return nil
 	})
 	conn.ws.SetCloseHandler(func(code int, text string) error {

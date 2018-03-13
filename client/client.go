@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/gopherjs/websocket/websocketjs"
+
 	"github.com/gopherjs/gopherjs/js"
 
 	"github.com/go-humble/locstor"
@@ -17,6 +19,7 @@ import (
 
 var ts *faceoff.TemplateSet
 var currentRoster *faceoff.Roster
+var websocket *websocketjs.WebSocket
 
 func main() {
 	d := dom.GetWindow().Document()
@@ -100,4 +103,28 @@ func createParameterizedRequestURL(ressoure string) string {
 		currentKey = "0"
 	}
 	return "/xhr/" + currentKey + ressoure
+}
+
+func getWebsocketURL() string {
+	key, _ := locstor.GetItem("currentBracketKey")
+	buf := bytes.Buffer{}
+	buf.WriteString("ws://")
+	buf.WriteString(dom.GetWindow().Location().Hostname)
+	buf.WriteString(":")
+	buf.WriteString(dom.GetWindow().Location().Port)
+	buf.WriteString("/ws/")
+	buf.WriteString(key)
+	return buf.String()
+}
+
+func setCurrentBracket(key string) {
+	if key == "" {
+		locstor.RemoveItem(key)
+	} else {
+		locstor.SetItem("currentBracketKey", key)
+	}
+	if websocket != nil {
+		websocket.Close()
+		websocket = nil
+	}
 }

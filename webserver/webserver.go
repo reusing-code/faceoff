@@ -31,6 +31,7 @@ func main() {
 	xhr.HandleFunc("/advance-round", roundAdvanceHandler)
 	xhr.HandleFunc("/commit-new-roster", newRosterHandler)
 
+	router.HandleFunc("/ws/{key:[0-9]+}", ServeWs)
 	router.HandleFunc("/templates", templateHandler)
 	router.PathPrefix("/static/").Handler(gziphandler.GzipHandler(http.StripPrefix("/static/", http.FileServer(http.Dir("static")))))
 	idxHndlGz := gziphandler.GzipHandler(http.HandlerFunc(indexHandler))
@@ -139,6 +140,7 @@ func voteHandler(w http.ResponseWriter, r *http.Request) {
 		roster.CurrentVotes++
 		SetRoster(scoreKey(key), scoreRoster)
 		SetRoster(key, roster)
+		TriggerUpdate(key)
 	}
 }
 
@@ -160,6 +162,7 @@ func roundAdvanceHandler(w http.ResponseWriter, r *http.Request) {
 		scoreRoster.AdvanceRound()
 		SetRoster(key, scoreRoster)
 		SetRoster(scoreKey(key), scoreRoster)
+		TriggerUpdate(key)
 	}
 }
 

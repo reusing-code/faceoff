@@ -26,6 +26,7 @@ type Match struct {
 	Contenders [2]string
 	Score      [2]int
 	Winner     Contender
+	Num        int
 }
 
 type Round struct {

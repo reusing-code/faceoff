@@ -18,7 +18,6 @@ import (
 )
 
 var ts *faceoff.TemplateSet
-var currentRoster *faceoff.Roster
 var websocket *websocketjs.WebSocket
 
 func main() {
@@ -41,8 +40,8 @@ func main() {
 	route("", true)
 }
 
-func saveRoster() {
-	b, err := json.Marshal(currentRoster)
+func saveRoster(roster *faceoff.Roster) {
+	b, err := json.Marshal(roster)
 	if err != nil {
 		panic(err)
 	}
@@ -61,6 +60,27 @@ func loadRoster() (*faceoff.Roster, error) {
 	err = json.Unmarshal([]byte(rosterStr), result)
 	return result, err
 
+}
+
+func getActiveVoteRoster(remoteRoster *faceoff.Roster) *faceoff.Roster {
+	localRoster, err := loadRoster()
+	if err != nil {
+		localRoster = nil
+	}
+
+	currentRoster := remoteRoster
+	if localRoster != nil {
+		if bytes.Compare(localRoster.UUID, remoteRoster.UUID) == 0 {
+			currentRoster = localRoster
+		} else {
+			locstor.RemoveItem("currentResultsTransmitted")
+		}
+	} else {
+		locstor.RemoveItem("currentResultsTransmitted")
+	}
+
+	saveRoster(currentRoster)
+	return currentRoster
 }
 
 func getRosterFromServer() (*faceoff.Roster, error) {
@@ -127,4 +147,18 @@ func setCurrentBracket(key string) {
 		websocket.Close()
 		websocket = nil
 	}
+}
+
+func getNextMatch(roster *faceoff.Roster) *faceoff.Match {
+	if roster.ActiveRound < 0 {
+		return nil
+	}
+	r := roster.Rounds[roster.ActiveRound]
+	for i, m := range r.Matches {
+		if m.Winner == faceoff.NONE {
+			m.Num = i
+			return m
+		}
+	}
+	return nil
 }

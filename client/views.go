@@ -69,10 +69,6 @@ func bracketView(remoteRoster *faceoff.Roster) {
 	btnA.AddEventListener("click", false, func(event dom.Event) {
 		route("/vote", true)
 	})
-	btnB := dom.GetWindow().Document().GetElementByID("btn-bracket").(*dom.HTMLButtonElement)
-	btnB.AddEventListener("click", false, func(event dom.Event) {
-		route("/bracket", false)
-	})
 
 	var err error
 	if websocket == nil {

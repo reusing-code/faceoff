@@ -3,17 +3,30 @@
 <div id="bracket">
 </div>
 <div id="stats">
-    {{ if (ge .ActiveRound 0) }}
-    <p>Bisher abgegebene Stimmen: {{ .CurrentVotes }}</p>
-    {{ end }}
+    <p>
+        {{ if not .BracketClosed }} Bisher abgegebene Stimmen: {{ .CurrentVotes }} {{ end }}
+    </p>
 </div>
 <div class="form-group">
-    {{ if (ge .ActiveRound 0) }}
+    {{ if .VoteActive }}
     <button id="btn-vote" class="btn btn btn-secondary btn-lg btn-block my-3">Zur Abstimmung</button>
-    {{ else }}
+    {{ else if .BracketClosed}}
     <button id="btn-vote" class="btn btn btn-secondary btn-lg btn-block my-3" disabled>Abstimmung abgeschlossen</button>
+    {{ else }}
+    <button id="btn-vote" class="btn btn btn-secondary btn-lg btn-block my-3" disabled>Bereits abgestimmt</button>
     {{ end }}
-    <button id="btn-bracket" class="btn btn btn-secondary btn-lg btn-block my-3">
-        <i class="fas fa-sync"></i> Aktualisieren</button>
 </div>
+{{ if .CloseRoundActive }}
+<div class="form-group">
+    &nbsp;
+</div>
+<div class="form-group">
+    &nbsp;
+</div>
+<div class="row">
+    <div class="mx-auto form-group">
+        <button id="btn-close-vote" class="btn btn btn-danger btn-lg my-3">Runde beenden</button>
+    </div>
+</div>
+{{ end }} 
 {{end}}

@@ -1,7 +1,7 @@
 {{ define "base" }}
 <div id="content" class="container">
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-3">
-        <span class="navbar-brand">Knockout</span>
+        <a class="navbar-brand" href="/welcome">Knockout</a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false"
             aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
@@ -15,7 +15,10 @@
                     <a class="nav-link" id="vote-link" href="/vote">Abstimmen</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" id="admin-link" href="/admin">Admin</a>
+                    <a class="nav-link" id="new-link" href="/new">Neue Abstimmung</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="list-link" href="/list">Liste</a>
                 </li>
             </ul>
         </div>

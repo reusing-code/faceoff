@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -112,7 +111,6 @@ func reader(conn *websocketConnection) {
 		return nil
 	})
 	conn.ws.SetCloseHandler(func(code int, text string) error {
-		fmt.Printf("WS %p closed with code %d: %s\n", conn.ws, code, text)
 		conn.ws.WriteControl(websocket.CloseMessage, websocket.FormatCloseMessage(code, text), time.Now().Add(pongWait))
 		return nil
 	})

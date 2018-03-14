@@ -60,19 +60,46 @@ func adminView(remoteRoster *faceoff.Roster) {
 }
 
 func bracketView(remoteRoster *faceoff.Roster) {
-	renderTemplate("bracket", remoteRoster)
+	activeRoster := getActiveVoteRoster(remoteRoster)
+	m := getNextMatch(activeRoster)
+	data := struct {
+		Name             string
+		CloseRoundActive bool
+		VoteActive       bool
+		BracketClosed    bool
+		CurrentVotes     int
+	}{
+		Name:             activeRoster.Name,
+		CloseRoundActive: m == nil && remoteRoster.ActiveRound >= 0,
+		VoteActive:       m != nil,
+		BracketClosed:    remoteRoster.ActiveRound < 0,
+		CurrentVotes:     remoteRoster.CurrentVotes,
+	}
+	renderTemplate("bracket", data)
 	setActiveNavItem("bracket-link")
 
 	js.Global.Call("jQuery", "#bracket").Call("bracket", getBracketOptions(remoteRoster))
 
-	btnA := dom.GetWindow().Document().GetElementByID("btn-vote").(*dom.HTMLButtonElement)
-	btnA.AddEventListener("click", false, func(event dom.Event) {
-		route("/vote", true)
-	})
-	btnB := dom.GetWindow().Document().GetElementByID("btn-bracket").(*dom.HTMLButtonElement)
-	btnB.AddEventListener("click", false, func(event dom.Event) {
-		route("/bracket", false)
-	})
+	btnA := dom.GetWindow().Document().GetElementByID("btn-vote")
+	if btnA != nil {
+		btnA.AddEventListener("click", false, func(event dom.Event) {
+			route("/vote", true)
+		})
+	}
+
+	btnClose := dom.GetWindow().Document().GetElementByID("btn-close-vote")
+	if btnClose != nil {
+		btnClose.AddEventListener("click", false, func(event dom.Event) {
+			result := dom.GetWindow().Confirm("Beendet die Runde für alle! Fortfahren?")
+			if !result {
+				return
+			}
+			go func() {
+				http.Post(createParameterizedRequestURL("/advance-round"), "POST", bytes.NewReader(remoteRoster.UUID))
+				route("/bracket", false)
+			}()
+		})
+	}
 
 	var err error
 	if websocket == nil {
@@ -84,66 +111,45 @@ func bracketView(remoteRoster *faceoff.Roster) {
 		websocket.AddEventListener("message", false, func(ev *js.Object) {
 			data := ev.Get("data").Interface().(string)
 			if data == "refresh" {
-				route("/bracket", false)
+				if dom.GetWindow().Location().Pathname == "/bracket" {
+					route("/bracket", false)
+				}
 			}
 		})
 	}
 }
 
 func votingView(remoteRoster *faceoff.Roster) {
-	localRoster, err := loadRoster()
-	if err != nil {
-		localRoster = nil
-	}
+	currentRoster := getActiveVoteRoster(remoteRoster)
 
-	currentRoster = remoteRoster
-	if localRoster != nil {
-		if bytes.Compare(localRoster.UUID, remoteRoster.UUID) == 0 {
-			currentRoster = localRoster
-		} else {
-			locstor.RemoveItem("currentResultsTransmitted")
-		}
-	} else {
-		locstor.RemoveItem("currentResultsTransmitted")
-	}
-
-	saveRoster()
-
-	matchShown := false
-	r := currentRoster.Rounds[len(currentRoster.Rounds)-1]
-	for i, m := range r.Matches {
-		if m.Winner == faceoff.NONE {
-			data := matchViewData{
-				ContenderA: m.Contenders[faceoff.A],
-				ContenderB: m.Contenders[faceoff.B],
-				RoundNum:   len(currentRoster.Rounds),
-				MatchNum:   i + 1,
-			}
-			showMatch(data, m)
-			matchShown = true
-			break
-		}
-	}
-	if !matchShown {
+	m := getNextMatch(currentRoster)
+	if m == nil {
 		showVotingFinished()
+		return
 	}
-
+	data := matchViewData{
+		ContenderA: m.Contenders[faceoff.A],
+		ContenderB: m.Contenders[faceoff.B],
+		RoundNum:   remoteRoster.ActiveRound + 1,
+		MatchNum:   m.Num + 1,
+	}
+	showMatch(currentRoster, data, m)
 }
 
-func showMatch(data matchViewData, m *faceoff.Match) {
+func showMatch(roster *faceoff.Roster, data matchViewData, m *faceoff.Match) {
 	renderTemplate("matchvote", data)
 	setActiveNavItem("vote-link")
 	d := dom.GetWindow().Document()
 	btnA := d.GetElementByID("btn-contenderA").(*dom.HTMLButtonElement)
 	btnA.AddEventListener("click", false, func(event dom.Event) {
 		m.WinA()
-		saveRoster()
+		saveRoster(roster)
 		route("/vote", false)
 	})
 	btnB := d.GetElementByID("btn-contenderB").(*dom.HTMLButtonElement)
 	btnB.AddEventListener("click", false, func(event dom.Event) {
 		m.WinB()
-		saveRoster()
+		saveRoster(roster)
 		route("/vote", false)
 	})
 }
@@ -169,7 +175,7 @@ func showVotingFinished() {
 		}
 	}
 
-	btnA := dom.GetWindow().Document().GetElementByID("btn-bracket").(*dom.HTMLButtonElement)
+	btnA := dom.GetWindow().Document().GetElementByID("btn-bracket")
 	btnA.AddEventListener("click", false, func(event dom.Event) {
 		route("/bracket", true)
 	})
@@ -177,6 +183,7 @@ func showVotingFinished() {
 
 func newBracketView() {
 	renderTemplate("newbracket", nil)
+	setActiveNavItem("new-link")
 	handler := func(ev dom.Event) {
 		count, _ := strconv.Atoi(ev.Target().InnerHTML())
 		showContestantInputs(count)
@@ -303,10 +310,15 @@ func renderTemplate(templateName string, data interface{}) {
 		event.PreventDefault()
 		route("/vote", true)
 	})
-	admin := d.GetElementByID("admin-link").(*dom.HTMLAnchorElement)
-	admin.AddEventListener("click", false, func(event dom.Event) {
+	new := d.GetElementByID("new-link").(*dom.HTMLAnchorElement)
+	new.AddEventListener("click", false, func(event dom.Event) {
 		event.PreventDefault()
-		route("/admin", true)
+		route("/new", true)
+	})
+	list := d.GetElementByID("list-link").(*dom.HTMLAnchorElement)
+	list.AddEventListener("click", false, func(event dom.Event) {
+		event.PreventDefault()
+		route("/list", true)
 	})
 
 }

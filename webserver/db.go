@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/rand"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/reusing-code/faceoff"
@@ -94,4 +95,41 @@ func CreateKey() string {
 		return CreateKey()
 	}
 	return id
+}
+
+func GetContestList() *faceoff.ContestList {
+	list := &faceoff.ContestList{
+		Open:   make([]faceoff.ContestDescription, 0),
+		Closed: make([]faceoff.ContestDescription, 0),
+	}
+
+	db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(bucketName))
+		b.ForEach(func(k, v []byte) error {
+			if k != nil && v != nil {
+				key := string(k)
+				if strings.HasSuffix(key, "_score") {
+					return nil
+				}
+				r := &faceoff.Roster{}
+				dec := gob.NewDecoder(bytes.NewReader(v))
+				err := dec.Decode(r)
+				if err != nil {
+					return err
+				}
+				desc := faceoff.ContestDescription{
+					Key:  key,
+					Name: r.Name,
+				}
+				if r.ActiveRound < 0 {
+					list.Closed = append(list.Closed, desc)
+				} else {
+					list.Open = append(list.Open, desc)
+				}
+			}
+			return nil
+		})
+		return nil
+	})
+	return list
 }

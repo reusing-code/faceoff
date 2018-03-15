@@ -1,0 +1,19 @@
+{{define "listitem"}}
+<a href="#" id="{{ .Key }}" class="bracket-list-item list-group-item list-group-item-action">{{ .Name }}</a>
+{{end}} 
+
+{{define "content"}}
+<h1>Liste aller Abstimmungen</h1>
+<h2>Offen:</h2>
+<div class="list-group">
+    {{range .Open}} 
+        {{template "listitem" .}} 
+    {{end}}
+</div>
+<h2>Abgeschlossen:</h2>
+<div class="list-group">
+    {{range .Closed}} 
+        {{template "listitem" .}} 
+    {{end}}
+</div>
+{{end}}

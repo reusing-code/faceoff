@@ -41,6 +41,16 @@ type Roster struct {
 	Name         string
 }
 
+type ContestDescription struct {
+	Key  string
+	Name string
+}
+
+type ContestList struct {
+	Open   []ContestDescription
+	Closed []ContestDescription
+}
+
 func init() {
 	rand.Seed(time.Now().UTC().UnixNano())
 }

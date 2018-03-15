@@ -287,6 +287,27 @@ func welcomeView() {
 
 }
 
+func listBracketView() {
+	data, err := getBracketListFromServer()
+	if err != nil {
+		println(err)
+		return
+	}
+	renderTemplate("bracketlist", data)
+	setActiveNavItem("list-link")
+
+	handler := func(ev dom.Event) {
+		ev.PreventDefault()
+		key := ev.Target().ID()
+		setCurrentBracket(key)
+		route("/bracket", true)
+	}
+	listItems := dom.GetWindow().Document().GetElementsByClassName("bracket-list-item")
+	for _, button := range listItems {
+		button.AddEventListener("click", false, handler)
+	}
+}
+
 func renderTemplate(templateName string, data interface{}) {
 	t := template.New("base")
 	t = template.Must(t.Parse(ts.Templates["layout/base"]))

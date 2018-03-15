@@ -39,6 +39,9 @@ func route(path string, addToHistory bool) {
 	} else if path == "/new" {
 		go newBracketView()
 		return
+	} else if path == "/list" {
+		go listBracketView()
+		return
 	} else if path == "/admin" {
 		go routeWithBracket(adminView)
 		return

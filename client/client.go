@@ -139,7 +139,7 @@ func getWebsocketURL() string {
 
 func setCurrentBracket(key string) {
 	if key == "" {
-		locstor.RemoveItem(key)
+		locstor.RemoveItem("currentBracketKey")
 	} else {
 		locstor.SetItem("currentBracketKey", key)
 	}
@@ -161,4 +161,21 @@ func getNextMatch(roster *faceoff.Roster) *faceoff.Match {
 		}
 	}
 	return nil
+}
+
+func getBracketListFromServer() (*faceoff.ContestList, error) {
+
+	r, err := http.Get("/rosterlist.json")
+	if err != nil {
+		return nil, err
+	}
+	if r.StatusCode == http.StatusNotFound {
+		return nil, fmt.Errorf("404")
+	}
+	buf := &bytes.Buffer{}
+	buf.ReadFrom(r.Body)
+	r.Body.Close()
+	list := &faceoff.ContestList{}
+	err = json.Unmarshal(buf.Bytes(), list)
+	return list, err
 }

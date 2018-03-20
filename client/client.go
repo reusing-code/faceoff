@@ -128,7 +128,11 @@ func createParameterizedRequestURL(ressoure string) string {
 func getWebsocketURL() string {
 	key, _ := locstor.GetItem("currentBracketKey")
 	buf := bytes.Buffer{}
-	buf.WriteString("ws://")
+	if dom.GetWindow().Location().Protocol == "https" {
+		buf.WriteString("wss://")
+	} else {
+		buf.WriteString("ws://")
+	}
 	buf.WriteString(dom.GetWindow().Location().Hostname)
 	buf.WriteString(":")
 	buf.WriteString(dom.GetWindow().Location().Port)

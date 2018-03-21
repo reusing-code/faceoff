@@ -47,7 +47,7 @@ func adminView(remoteRoster *faceoff.Roster) {
 		btnA := d.GetElementByID("btn-advance-round").(*dom.HTMLButtonElement)
 		btnA.AddEventListener("click", false, func(event dom.Event) {
 			go func() {
-				http.Post(createParameterizedRequestURL("/advance-round"), "POST", bytes.NewReader(remoteRoster.UUID))
+				http.Post(createParameterizedXHRRequestURL("/advance-round"), "POST", bytes.NewReader(remoteRoster.UUID))
 				route("/bracket", true)
 			}()
 		})
@@ -95,7 +95,7 @@ func bracketView(remoteRoster *faceoff.Roster) {
 				return
 			}
 			go func() {
-				http.Post(createParameterizedRequestURL("/advance-round"), "POST", bytes.NewReader(remoteRoster.UUID))
+				http.Post(createParameterizedXHRRequestURL("/advance-round"), "POST", bytes.NewReader(remoteRoster.UUID))
 				route("/bracket", false)
 			}()
 		})
@@ -185,7 +185,7 @@ func showVotingFinished() {
 			if err != nil {
 				panic(err)
 			}
-			r, err := http.Post(createParameterizedRequestURL("/submit-vote"), "application/json", strings.NewReader(roster))
+			r, err := http.Post(createParameterizedXHRRequestURL("/submit-vote"), "application/json", strings.NewReader(roster))
 			if err != nil {
 				panic(err)
 			}

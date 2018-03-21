@@ -17,20 +17,31 @@ func route(path string, addToHistory bool) {
 		path = dom.GetWindow().Location().Pathname
 	}
 
-	if path == "" || path == "/" {
-		path = "/bracket"
-	} else {
-		stripped := strings.Replace(path, "/", "", -1)
-		_, err := strconv.Atoi(stripped)
+	components := strings.SplitN(path, "/", 3)
+	if len(components) > 1 {
+		_, err := strconv.Atoi(components[1])
 		if err == nil {
-			setCurrentBracket(stripped)
-			path = "/bracket"
+			setCurrentBracket(components[1])
+			if len(components) > 2 {
+				path = "/" + components[2]
+			} else {
+				path = ""
+			}
 		}
 	}
 
+	if path == "" || path == "/" {
+		path = "/bracket"
+	}
+
 	if addToHistory {
+		key := getCurrentBracketKey()
+		newPath := path
+		if len(key) > 0 {
+			newPath = "/" + key + path
+		}
 		history := js.Global.Get("history")
-		history.Call("pushState", nil, "", path)
+		history.Call("pushState", nil, "", newPath)
 	}
 
 	if path == "/welcome" {

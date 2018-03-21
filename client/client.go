@@ -84,7 +84,7 @@ func getActiveVoteRoster(remoteRoster *faceoff.Roster) *faceoff.Roster {
 }
 
 func getRosterFromServer() (*faceoff.Roster, error) {
-	r, err := http.Get(createParameterizedRequestURL("/roster.json"))
+	r, err := http.Get(createParameterizedXHRRequestURL("/roster.json"))
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +101,7 @@ func commitNewRoster(contestants []string) {
 		println(err)
 		return
 	}
-	r, err := http.Post(createParameterizedRequestURL("/commit-new-roster"), "POST", bytes.NewReader(marshalled))
+	r, err := http.Post(createParameterizedXHRRequestURL("/commit-new-roster"), "POST", bytes.NewReader(marshalled))
 	if err != nil {
 		println(err)
 		return
@@ -117,7 +117,7 @@ func commitNewRoster(contestants []string) {
 	bracketCreatedView(contestants[0], buf.String())
 }
 
-func createParameterizedRequestURL(ressoure string) string {
+func createParameterizedXHRRequestURL(ressoure string) string {
 	currentKey, err := locstor.GetItem("currentBracketKey")
 	if err != nil {
 		currentKey = "0"
@@ -151,6 +151,14 @@ func setCurrentBracket(key string) {
 		websocket.Close()
 		websocket = nil
 	}
+}
+
+func getCurrentBracketKey() string {
+	key, err := locstor.GetItem("currentBracketKey")
+	if err != nil {
+		return ""
+	}
+	return key
 }
 
 func getNextMatch(roster *faceoff.Roster) *faceoff.Match {

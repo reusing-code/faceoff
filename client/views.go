@@ -101,19 +101,39 @@ func bracketView(remoteRoster *faceoff.Roster) {
 		})
 	}
 
+	btnRefresh := dom.GetWindow().Document().GetElementByID("btn-bracket")
+	if btnRefresh != nil {
+		btnRefresh.AddEventListener("click", false, func(event dom.Event) {
+			route("/bracket", false)
+		})
+		btnRefresh.(*dom.HTMLButtonElement).Disabled = true
+	}
+
 	var err error
 	if websocket == nil {
 		websocket, err = websocketjs.New(getWebsocketURL())
 		if err != nil {
 			println(err)
+			return
 		}
-
 		websocket.AddEventListener("message", false, func(ev *js.Object) {
 			data := ev.Get("data").Interface().(string)
 			if data == "refresh" {
 				if dom.GetWindow().Location().Pathname == "/bracket" {
 					route("/bracket", false)
 				}
+			}
+		})
+		websocket.AddEventListener("close", false, func(ev *js.Object) {
+			btnRefresh := dom.GetWindow().Document().GetElementByID("btn-bracket")
+			if btnRefresh != nil {
+				btnRefresh.(*dom.HTMLButtonElement).Disabled = false
+			}
+		})
+		websocket.AddEventListener("error", false, func(ev *js.Object) {
+			btnRefresh := dom.GetWindow().Document().GetElementByID("btn-bracket")
+			if btnRefresh != nil {
+				btnRefresh.(*dom.HTMLButtonElement).Disabled = false
 			}
 		})
 	}
@@ -220,10 +240,6 @@ func showContestantInputs(count int) {
 	formDiv.SetInnerHTML(buf.String())
 	d.GetElementByID("form-contestant-names").AddEventListener("submit", false, func(event dom.Event) {
 		event.PreventDefault()
-		result := dom.GetWindow().Confirm("Erstellen eines neuen Wettbewerb ersetzt den aktuellen! Fortfahren?")
-		if !result {
-			return
-		}
 		contestants := make([]string, count+1)
 		contestants[0] = d.GetElementByID("name-input").(*dom.HTMLInputElement).Value
 		for i, input := range d.GetElementsByClassName("contestant-input") {

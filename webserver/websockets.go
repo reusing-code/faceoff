@@ -32,7 +32,11 @@ func TriggerUpdate(key string) {
 		return
 	}
 	for _, conn := range values {
-		conn.c <- true
+		if conn != nil {
+			conn.c <- true
+		} else {
+			println("conn is nil!")
+		}
 	}
 }
 
@@ -76,6 +80,7 @@ func removeConnection(conn *websocketConnection) {
 			values = values[:len(values)-1]
 		}
 	}
+	openConnections[conn.key] = values
 }
 
 func writer(conn *websocketConnection) {

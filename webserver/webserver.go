@@ -14,8 +14,6 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/reusing-code/faceoff"
-
-	"github.com/NYTimes/gziphandler"
 )
 
 func main() {
@@ -34,9 +32,8 @@ func main() {
 	router.HandleFunc("/rosterlist.json", rosterListHandler)
 	router.HandleFunc("/ws/{key:[0-9]+}", ServeWs)
 	router.HandleFunc("/templates", templateHandler)
-	router.PathPrefix("/static/").Handler(gziphandler.GzipHandler(http.StripPrefix("/static/", http.FileServer(http.Dir("static")))))
-	idxHndlGz := gziphandler.GzipHandler(http.HandlerFunc(indexHandler))
-	router.PathPrefix("/").Handler(idxHndlGz)
+	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
+	router.PathPrefix("/").HandlerFunc(indexHandler)
 
 	http.Handle("/", router)
 	log.Fatal(http.ListenAndServe(":"+strconv.Itoa(*port), nil))

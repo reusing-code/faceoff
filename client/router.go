@@ -10,7 +10,13 @@ import (
 	"honnef.co/go/js/dom"
 )
 
-type viewFunc func(bracket *faceoff.Roster)
+type viewFunc func()
+type viewFuncRoster func(bracket *faceoff.Roster)
+
+type historyEntry struct {
+	addToHistory bool
+	path         string
+}
 
 func route(path string, addToHistory bool) {
 	if path == "" {
@@ -34,39 +40,37 @@ func route(path string, addToHistory bool) {
 		path = "/bracket"
 	}
 
-	if addToHistory {
-		key := getCurrentBracketKey()
-		newPath := path
-		if len(key) > 0 {
-			newPath = "/" + key + path
-		}
-		history := js.Global.Get("history")
-		history.Call("pushState", nil, "", newPath)
+	hist := &historyEntry{
+		addToHistory: addToHistory,
+		path:         path,
 	}
 
 	if path == "/welcome" {
-		go welcomeView()
+		go routeWithOutBracket(welcomeView, hist)
+		return
+	} else if path == "/impressum" {
+		go routeWithOutBracket(impressumView, hist)
 		return
 	} else if path == "/new" {
-		go newBracketView()
+		go routeWithOutBracket(newBracketView, hist)
 		return
 	} else if path == "/list" {
-		go listBracketView()
+		go routeWithOutBracket(listBracketView, hist)
 		return
 	} else if path == "/admin" {
-		go routeWithBracket(adminView)
+		go routeWithBracket(adminView, hist)
 		return
 	} else if path == "/vote" {
-		go routeWithBracket(votingView)
+		go routeWithBracket(votingView, hist)
 		return
 	} else {
-		go routeWithBracket(bracketView)
+		go routeWithBracket(bracketView, hist)
 		return
 	}
 
 }
 
-func routeWithBracket(view viewFunc) {
+func routeWithBracket(view viewFuncRoster, hist *historyEntry) {
 	roster, err := getRosterFromServer()
 
 	bracketValid := err == nil
@@ -75,8 +79,13 @@ func routeWithBracket(view viewFunc) {
 		route("/welcome", true)
 		return
 	}
-
+	hist.handleHistoryEntry(true)
 	view(roster)
+}
+
+func routeWithOutBracket(view viewFunc, hist *historyEntry) {
+	hist.handleHistoryEntry(false)
+	view()
 }
 
 func setActiveNavItem(id string) {
@@ -88,4 +97,18 @@ func setActiveNavItem(id string) {
 	}
 
 	d.GetElementByID(id).Class().Add("active")
+}
+
+func (hist *historyEntry) handleHistoryEntry(withKey bool) {
+	if hist.addToHistory {
+		newPath := hist.path
+		if withKey {
+			key := getCurrentBracketKey()
+			if len(key) > 0 {
+				newPath = "/" + key + hist.path
+			}
+		}
+		history := js.Global.Get("history")
+		history.Call("pushState", nil, "", newPath)
+	}
 }

@@ -303,6 +303,10 @@ func welcomeView() {
 
 }
 
+func impressumView() {
+	renderTemplate("impressum", nil)
+}
+
 func listBracketView() {
 	data, err := getBracketListFromServer()
 	if err != nil {
@@ -327,6 +331,7 @@ func listBracketView() {
 func renderTemplate(templateName string, data interface{}) {
 	t := template.New("base")
 	t = template.Must(t.Parse(ts.Templates["layout/base"]))
+	t = template.Must(t.Parse(ts.Templates["layout/footer"]))
 	t = template.Must(t.Parse(ts.Templates[templateName]))
 
 	buf := &bytes.Buffer{}
@@ -337,6 +342,11 @@ func renderTemplate(templateName string, data interface{}) {
 	d := dom.GetWindow().Document()
 	d.GetElementByID("app").SetInnerHTML(buf.String())
 
+	brand := d.GetElementByID("navbar-brand").(*dom.HTMLAnchorElement)
+	brand.AddEventListener("click", false, func(event dom.Event) {
+		event.PreventDefault()
+		route("/welcome", true)
+	})
 	bracket := d.GetElementByID("bracket-link").(*dom.HTMLAnchorElement)
 	bracket.AddEventListener("click", false, func(event dom.Event) {
 		event.PreventDefault()
@@ -356,6 +366,16 @@ func renderTemplate(templateName string, data interface{}) {
 	list.AddEventListener("click", false, func(event dom.Event) {
 		event.PreventDefault()
 		route("/list", true)
+	})
+	impressum := d.GetElementByID("a-impressum").(*dom.HTMLAnchorElement)
+	impressum.AddEventListener("click", false, func(event dom.Event) {
+		event.PreventDefault()
+		route("/impressum", true)
+	})
+	contact := d.GetElementByID("a-contact").(*dom.HTMLAnchorElement)
+	contact.AddEventListener("click", false, func(event dom.Event) {
+		event.PreventDefault()
+		route("/impressum", true)
 	})
 
 }

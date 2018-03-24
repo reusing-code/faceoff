@@ -26,13 +26,6 @@
 
 ignored = ["github.com/gopherjs/gopherjs*"]
 
-[[constraint]]
-  name = "github.com/go-humble/locstor"
-  version = "0.2.2"
-
-[[constraint]]
-  branch = "master"
-  name = "honnef.co/go/js/dom"
 
 [prune]
   go-tests = true

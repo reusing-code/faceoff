@@ -5,6 +5,8 @@ import (
 	"encoding/gob"
 	"fmt"
 	"math/rand"
+	"os"
+	pathpkg "path"
 	"strconv"
 	"strings"
 	"time"
@@ -22,9 +24,14 @@ func init() {
 	rand.Seed(time.Now().UTC().UnixNano())
 }
 
-func OpenDB() error {
+func OpenDB(path string) error {
 	var err error
-	db, err = bolt.Open("faceoff.db", 0644, nil)
+	dir, _ := pathpkg.Split(path)
+	err = os.MkdirAll(dir, 0755)
+	if err != nil {
+		return err
+	}
+	db, err = bolt.Open(path, 0644, nil)
 	if err != nil {
 		return err
 	}

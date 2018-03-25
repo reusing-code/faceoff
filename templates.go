@@ -16,7 +16,6 @@ type TemplateSet struct {
 func LoadTemplatesFromDisk() (*TemplateSet, error) {
 	ts := &TemplateSet{}
 	ts.Templates = make(map[string]string)
-	os.Chdir("..")
 	err := filepath.Walk("templates", func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -30,6 +29,7 @@ func LoadTemplatesFromDisk() (*TemplateSet, error) {
 		if err != nil {
 			return err
 		}
+		b = configureRawTemplateFile(b)
 		ts.Templates[name] = string(b)
 		return nil
 	})
@@ -37,7 +37,6 @@ func LoadTemplatesFromDisk() (*TemplateSet, error) {
 	if err != nil {
 		return ts, err
 	}
-	os.Chdir("webserver")
 	return ts, nil
 }
 
@@ -56,4 +55,14 @@ func LoadTemplatesFromGob(b []byte) (*TemplateSet, error) {
 	dec := gob.NewDecoder(bytes.NewReader(b))
 	err := dec.Decode(ts)
 	return ts, err
+}
+
+func configureRawTemplateFile(b []byte) []byte {
+	version, err := ioutil.ReadFile("version.txt")
+	if err != nil {
+		version = []byte("")
+	}
+
+	result := strings.Replace(string(b), "@version@", string(version), -1)
+	return []byte(result)
 }

@@ -16,8 +16,8 @@
 *.db
 
 vendor
+package
 
 client/client.js
 client/client.js.map
 webserver/webserver
-webserver/values.txt

@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"os"
 	"strconv"
-	"strings"
 
 	"github.com/gorilla/mux"
 
@@ -20,7 +19,10 @@ func main() {
 	port := flag.Int("p", 8086, "port number")
 	flag.Parse()
 
-	OpenDB()
+	err := OpenDB("db/faceoff.db")
+	if err != nil {
+		panic(err)
+	}
 
 	router := mux.NewRouter()
 	xhr := router.PathPrefix("/xhr/{key:[0-9]+}").Subrouter()
@@ -39,20 +41,8 @@ func main() {
 	log.Fatal(http.ListenAndServe(":"+strconv.Itoa(*port), nil))
 }
 
-func jsHandler(w http.ResponseWriter, r *http.Request) {
-	if strings.Contains(r.URL.Path, "map") {
-		http.ServeFile(w, r, "../client/client.js.map")
-		return
-	}
-	http.ServeFile(w, r, "../client/client.js")
-}
-
 func indexHandler(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path == "/client.js" || r.URL.Path == "/client.js.map" {
-		jsHandler(w, r)
-		return
-	}
-	http.ServeFile(w, r, "../client/index.html")
+	http.ServeFile(w, r, "static/index.html")
 }
 
 func templateHandler(w http.ResponseWriter, r *http.Request) {

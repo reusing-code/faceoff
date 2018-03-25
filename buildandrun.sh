@@ -1,8 +1,7 @@
 #!/bin/bash
 
-cd client
-gopherjs build
-cd ../webserver
 killall webserver
-go build
+
+./buildPackage.sh
+cd package
 ./webserver &

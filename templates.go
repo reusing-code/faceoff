@@ -58,11 +58,19 @@ func LoadTemplatesFromGob(b []byte) (*TemplateSet, error) {
 }
 
 func configureRawTemplateFile(b []byte) []byte {
-	version, err := ioutil.ReadFile("version.txt")
+	b = replaceFromFile(b, "@version@", "version.txt")
+	b = replaceFromFile(b, "@imprint@", "imprint.txt")
+
+	return b
+}
+
+func replaceFromFile(input []byte, placeholder string, filename string) []byte {
+	content, err := ioutil.ReadFile(filename)
 	if err != nil {
-		version = []byte("")
+		content = []byte("")
 	}
 
-	result := strings.Replace(string(b), "@version@", string(version), -1)
+	result := strings.Replace(string(input), placeholder, string(content), -1)
 	return []byte(result)
+
 }

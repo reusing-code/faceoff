@@ -303,8 +303,8 @@ func welcomeView() {
 
 }
 
-func impressumView() {
-	renderTemplate("impressum", nil)
+func imprintView() {
+	renderTemplate("imprint", nil)
 }
 
 func listBracketView() {
@@ -367,8 +367,8 @@ func renderTemplate(templateName string, data interface{}) {
 		event.PreventDefault()
 		route("/list", true)
 	})
-	impressum := d.GetElementByID("a-impressum").(*dom.HTMLAnchorElement)
-	impressum.AddEventListener("click", false, func(event dom.Event) {
+	imprint := d.GetElementByID("a-imprint").(*dom.HTMLAnchorElement)
+	imprint.AddEventListener("click", false, func(event dom.Event) {
 		event.PreventDefault()
 		route("/impressum", true)
 	})

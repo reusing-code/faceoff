@@ -49,7 +49,7 @@ func route(path string, addToHistory bool) {
 		go routeWithOutBracket(welcomeView, hist)
 		return
 	} else if path == "/impressum" {
-		go routeWithOutBracket(impressumView, hist)
+		go routeWithOutBracket(imprintView, hist)
 		return
 	} else if path == "/new" {
 		go routeWithOutBracket(newBracketView, hist)

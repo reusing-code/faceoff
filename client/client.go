@@ -95,8 +95,8 @@ func getRosterFromServer() (*faceoff.Roster, error) {
 	return result, err
 }
 
-func commitNewRoster(contestants []string) {
-	marshalled, err := json.Marshal(contestants)
+func commitNewRoster(roster *faceoff.Roster) {
+	marshalled, err := json.Marshal(roster)
 	if err != nil {
 		println(err)
 		return
@@ -114,7 +114,7 @@ func commitNewRoster(contestants []string) {
 	buf := &bytes.Buffer{}
 	buf.ReadFrom(r.Body)
 	r.Body.Close()
-	bracketCreatedView(contestants[0], buf.String())
+	bracketCreatedView(roster.Name, buf.String())
 }
 
 func createParameterizedXHRRequestURL(ressoure string) string {

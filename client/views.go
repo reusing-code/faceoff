@@ -263,17 +263,25 @@ func showContestantInputs(count int) {
 
 	d.GetElementByID("form-contestant-names").AddEventListener("submit", false, func(event dom.Event) {
 		event.PreventDefault()
-		contestants := make([]string, count+1)
-		contestants[0] = d.GetElementByID("name-input").(*dom.HTMLInputElement).Value
+		contestants := make([]string, count)
+		name := d.GetElementByID("name-input").(*dom.HTMLInputElement).Value
 		for i, input := range d.GetElementsByClassName("contestant-input") {
-			contestants[i+1] = input.(*dom.HTMLInputElement).Value
+			contestants[i] = input.(*dom.HTMLInputElement).Value
 		}
 		if d.GetElementByID("randomize-input").(*dom.HTMLInputElement).Checked {
 			rand.Shuffle(count, func(i, j int) {
-				contestants[i+1], contestants[j+1] = contestants[j+1], contestants[i+1]
+				contestants[i], contestants[j] = contestants[j], contestants[i]
 			})
 		}
-		go commitNewRoster(contestants)
+		roster, err := faceoff.CreateRoster(name, contestants)
+		if err != nil {
+			println(err)
+			return
+		}
+		if d.GetElementByID("radio-private").(*dom.HTMLInputElement).Checked {
+			roster.Private = true
+		}
+		go commitNewRoster(roster)
 	})
 }
 

@@ -163,18 +163,13 @@ func newRosterHandler(w http.ResponseWriter, r *http.Request) {
 	b.ReadFrom(r.Body)
 	r.Body.Close()
 
-	participants := make([]string, 0)
-	json.Unmarshal(b.Bytes(), &participants)
-	if len(participants) < 1 {
-		println("Bad data in /commit-new-roster: slice empty")
-		return
-	}
-
-	roster, err := faceoff.CreateRoster(participants[0], participants[1:])
+	roster := &faceoff.Roster{}
+	err := json.Unmarshal(b.Bytes(), roster)
 	if err != nil {
 		println("Bad data in /commit-new-roster: " + err.Error())
 		return
 	}
+
 	key := CreateKey()
 	SetRoster(key, roster)
 	SetRoster(scoreKey(key), roster)

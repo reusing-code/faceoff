@@ -39,6 +39,7 @@ type Roster struct {
 	CurrentVotes int
 	ActiveRound  int
 	Name         string
+	Private      bool
 }
 
 type ContestDescription struct {

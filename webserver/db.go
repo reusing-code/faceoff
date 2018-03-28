@@ -124,6 +124,9 @@ func GetContestList() *faceoff.ContestList {
 				if err != nil {
 					return err
 				}
+				if r.Private {
+					return nil
+				}
 				desc := faceoff.ContestDescription{
 					Key:  key,
 					Name: r.Name,

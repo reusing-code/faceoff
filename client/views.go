@@ -218,6 +218,17 @@ func showContestantInputs(count int) {
 	d := dom.GetWindow().Document()
 	formDiv := d.GetElementByID("contestant-input-elements").(*dom.HTMLDivElement)
 
+	oldNameInput := d.GetElementByID("name-input")
+	oldName := ""
+	if oldNameInput != nil {
+		oldName = oldNameInput.(*dom.HTMLInputElement).Value
+	}
+	oldInputElements := d.GetElementsByClassName("contestant-input")
+	oldValues := make([]string, 0, len(oldInputElements))
+	for _, ele := range oldInputElements {
+		oldValues = append(oldValues, ele.(*dom.HTMLInputElement).Value)
+	}
+
 	t := template.New("contestant-input")
 	t = template.Must(t.Parse(ts.Templates["snippets/contestant-input"]))
 
@@ -238,6 +249,18 @@ func showContestantInputs(count int) {
 	}
 
 	formDiv.SetInnerHTML(buf.String())
+
+	newNameInput := d.GetElementByID("name-input")
+	if newNameInput != nil {
+		newNameInput.(*dom.HTMLInputElement).Value = oldName
+	}
+	newInputElements := d.GetElementsByClassName("contestant-input")
+	for i, ele := range newInputElements {
+		if i < len(oldValues) {
+			ele.(*dom.HTMLInputElement).Value = oldValues[i]
+		}
+	}
+
 	d.GetElementByID("form-contestant-names").AddEventListener("submit", false, func(event dom.Event) {
 		event.PreventDefault()
 		contestants := make([]string, count+1)

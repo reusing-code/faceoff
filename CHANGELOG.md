@@ -6,8 +6,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 ### Added 
-- NewContest: Entered values are now remembered when changing bracket size
 - NewContest: Option to set contest to private. It will not show up in list
+- Added code of conduct
+- Added mage for build process
+
+### Changed
+- NewContest: Entered values are now remembered when changing bracket size
 
 ## [0.4.0] - 2018-03-28
 ### Added

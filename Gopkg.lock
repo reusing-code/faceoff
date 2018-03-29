@@ -44,6 +44,21 @@
   version = "v1.2.0"
 
 [[projects]]
+  name = "github.com/magefile/mage"
+  packages = [
+    ".",
+    "build",
+    "mage",
+    "mg",
+    "parse",
+    "parse/srcimporter",
+    "sh",
+    "types"
+  ]
+  revision = "ab3ca2f6f85577d7ec82e0a6df721147a2e737f9"
+  version = "v2.0.1"
+
+[[projects]]
   branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix"]
@@ -58,6 +73,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "f27b1b885cc67a5d3ca8f911d1fc50d170ce72735a7e63ba4fee12f5b0d622a0"
+  inputs-digest = "6591df2c14ad5534e8195cedfd4b0a9ff418649438683b47bd250b9ab32e031b"
   solver-name = "gps-cdcl"
   solver-version = 1

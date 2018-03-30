@@ -16,10 +16,9 @@ import (
 var Default = Build
 
 var g0 = sh.RunCmd("go")
-var posixCommand = sh.RunCmd("command", "-v")
 
 func isToolInstalled(name string) bool {
-	err := posixCommand(name)
+	_, err := exec.LookPath(name)
 	if err != nil {
 		return false
 	} else {
@@ -47,8 +46,19 @@ func depEnsure() error {
 // A build step that requires additional params, or platform specific steps for example
 func Build() error {
 	mg.Deps(InstallDeps)
-	fmt.Println("Building...")
+	log.Println("Building...")
 
+	// build server
+	cmd := exec.Command("go", "build", "-v")
+	cmd.Dir = "webserver"
+	err := cmd.Run()
+	if err != nil {
+		return err
+	}
+
+	// build client
+	// @TODO non minified compilation for development
+	cmd = exec.Command("gopherjs", "build", "-m")
 	return cmd.Run()
 }
 
@@ -60,6 +70,7 @@ func Install() error {
 }
 
 func InstallDeps() error {
+	log.Println("Installing Deps...")
 	checkGopherJS()
 	err := depEnsure()
 	if err != nil {
@@ -71,5 +82,5 @@ func InstallDeps() error {
 // Clean up after yourself
 func Clean() {
 	fmt.Println("Cleaning...")
-	os.RemoveAll("MyApp")
+	os.RemoveAll("Package")
 }

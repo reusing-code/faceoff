@@ -43,7 +43,6 @@ func depEnsure() error {
 	return exec.Command("dep", "ensure").Run()
 }
 
-// A build step that requires additional params, or platform specific steps for example
 func Build() error {
 	mg.Deps(InstallDeps)
 	log.Println("Building...")
@@ -59,14 +58,31 @@ func Build() error {
 	// build client
 	// @TODO non minified compilation for development
 	cmd = exec.Command("gopherjs", "build", "-m")
+	cmd.Dir = "client"
 	return cmd.Run()
 }
 
-// A custom install step if you need your bin someplace other than go/bin
 func Install() error {
 	mg.Deps(Build)
 	fmt.Println("Installing...")
-	return os.Rename("./MyApp", "/usr/bin/MyApp")
+	os.MkdirAll("package", 0755)
+	err := exec.Command("cp", "-ruf", "static", "templates", "package/").Run()
+	if err != nil {
+		return err
+	}
+	err = exec.Command("cp", "-ruf", "webserver/webserver", "package/").Run()
+	if err != nil {
+		return err
+	}
+	err = exec.Command("cp", "-ruf", "client/client.js", "client/client.js.map", "package/static/").Run()
+	if err != nil {
+		return err
+	}
+
+	//ignore error
+	exec.Command("cp", "uf", "version.txt", "package/").Run()
+
+	return nil
 }
 
 func InstallDeps() error {
@@ -79,8 +95,7 @@ func InstallDeps() error {
 	return nil
 }
 
-// Clean up after yourself
 func Clean() {
 	fmt.Println("Cleaning...")
-	os.RemoveAll("Package")
+	os.RemoveAll("package")
 }

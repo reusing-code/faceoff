@@ -12,12 +12,13 @@ import (
 
 	"github.com/go-humble/locstor"
 
-	"github.com/reusing-code/faceoff"
+	"github.com/reusing-code/faceoff/shared/contest"
+	"github.com/reusing-code/faceoff/shared/templates"
 
 	"honnef.co/go/js/dom"
 )
 
-var ts *faceoff.TemplateSet
+var ts *templates.TemplateSet
 var websocket *websocketjs.WebSocket
 
 func main() {
@@ -28,7 +29,7 @@ func main() {
 	buf.ReadFrom(response.Body)
 	response.Body.Close()
 	var err error
-	ts, err = faceoff.LoadTemplatesFromGob(buf.Bytes())
+	ts, err = templates.LoadTemplatesFromGob(buf.Bytes())
 	if err != nil {
 		d.GetElementByID("app").AppendChild(d.CreateTextNode("Error: " + err.Error()))
 	}
@@ -40,7 +41,7 @@ func main() {
 	route("", true)
 }
 
-func saveRoster(roster *faceoff.Roster) {
+func saveRoster(roster *contest.Roster) {
 	b, err := json.Marshal(roster)
 	if err != nil {
 		panic(err)
@@ -48,7 +49,7 @@ func saveRoster(roster *faceoff.Roster) {
 	locstor.SetItem("currentRoster", string(b))
 }
 
-func loadRoster() (*faceoff.Roster, error) {
+func loadRoster() (*contest.Roster, error) {
 	rosterStr, err := locstor.GetItem("currentRoster")
 	if _, ok := err.(locstor.ItemNotFoundError); ok {
 		return nil, nil
@@ -56,13 +57,13 @@ func loadRoster() (*faceoff.Roster, error) {
 	if err != nil {
 		return nil, err
 	}
-	result := &faceoff.Roster{}
+	result := &contest.Roster{}
 	err = json.Unmarshal([]byte(rosterStr), result)
 	return result, err
 
 }
 
-func getActiveVoteRoster(remoteRoster *faceoff.Roster) *faceoff.Roster {
+func getActiveVoteRoster(remoteRoster *contest.Roster) *contest.Roster {
 	localRoster, err := loadRoster()
 	if err != nil {
 		localRoster = nil
@@ -83,7 +84,7 @@ func getActiveVoteRoster(remoteRoster *faceoff.Roster) *faceoff.Roster {
 	return currentRoster
 }
 
-func getRosterFromServer() (*faceoff.Roster, error) {
+func getRosterFromServer() (*contest.Roster, error) {
 	r, err := http.Get(createParameterizedXHRRequestURL("/roster.json"))
 	if err != nil {
 		return nil, err
@@ -91,11 +92,11 @@ func getRosterFromServer() (*faceoff.Roster, error) {
 	if r.StatusCode == http.StatusNotFound {
 		return nil, fmt.Errorf("404")
 	}
-	result, err := faceoff.ParseRoster(r.Body)
+	result, err := contest.ParseRoster(r.Body)
 	return result, err
 }
 
-func commitNewRoster(roster *faceoff.Roster) {
+func commitNewRoster(roster *contest.Roster) {
 	marshalled, err := json.Marshal(roster)
 	if err != nil {
 		println(err)
@@ -161,13 +162,13 @@ func getCurrentBracketKey() string {
 	return key
 }
 
-func getNextMatch(roster *faceoff.Roster) *faceoff.Match {
+func getNextMatch(roster *contest.Roster) *contest.Match {
 	if roster.ActiveRound < 0 {
 		return nil
 	}
 	r := roster.Rounds[roster.ActiveRound]
 	for i, m := range r.Matches {
-		if m.Winner == faceoff.NONE {
+		if m.Winner == contest.NONE {
 			m.Num = i
 			return m
 		}
@@ -175,7 +176,7 @@ func getNextMatch(roster *faceoff.Roster) *faceoff.Match {
 	return nil
 }
 
-func getBracketListFromServer() (*faceoff.ContestList, error) {
+func getBracketListFromServer() (*contest.ContestList, error) {
 
 	r, err := http.Get("/rosterlist.json")
 	if err != nil {
@@ -187,7 +188,7 @@ func getBracketListFromServer() (*faceoff.ContestList, error) {
 	buf := &bytes.Buffer{}
 	buf.ReadFrom(r.Body)
 	r.Body.Close()
-	list := &faceoff.ContestList{}
+	list := &contest.ContestList{}
 	err = json.Unmarshal(buf.Bytes(), list)
 	return list, err
 }

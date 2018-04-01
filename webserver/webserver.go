@@ -12,7 +12,8 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/reusing-code/faceoff"
+	"github.com/reusing-code/faceoff/shared/contest"
+	"github.com/reusing-code/faceoff/shared/templates"
 )
 
 func main() {
@@ -46,7 +47,7 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func templateHandler(w http.ResponseWriter, r *http.Request) {
-	ts, err := faceoff.LoadTemplatesFromDisk()
+	ts, err := templates.LoadTemplatesFromDisk()
 	if err == nil {
 		var gob []byte
 		gob, err = ts.EncodeGob()
@@ -62,7 +63,7 @@ func templateHandler(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func createRoster(filename string) *faceoff.Roster {
+func createRoster(filename string) *contest.Roster {
 	f, err := os.Open(filename)
 	defer f.Close()
 	if err != nil {
@@ -72,7 +73,7 @@ func createRoster(filename string) *faceoff.Roster {
 	if err != nil {
 		panic(err)
 	}
-	r, err := faceoff.CreateRosterRaw("Default", b)
+	r, err := contest.CreateRosterRaw("Default", b)
 	if err != nil {
 		panic(err)
 	}
@@ -111,7 +112,7 @@ func handleNotFound(w http.ResponseWriter, r *http.Request) {
 
 func voteHandler(w http.ResponseWriter, r *http.Request) {
 	key := mux.Vars(r)["key"]
-	voteRoster, err := faceoff.ParseRoster(r.Body)
+	voteRoster, err := contest.ParseRoster(r.Body)
 	if err != nil {
 		return
 	}
@@ -163,7 +164,7 @@ func newRosterHandler(w http.ResponseWriter, r *http.Request) {
 	b.ReadFrom(r.Body)
 	r.Body.Close()
 
-	roster := &faceoff.Roster{}
+	roster := &contest.Roster{}
 	err := json.Unmarshal(b.Bytes(), roster)
 	if err != nil {
 		println("Bad data in /commit-new-roster: " + err.Error())

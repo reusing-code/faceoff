@@ -5,22 +5,19 @@ import (
 	"strconv"
 
 	"github.com/gopherjs/gopherjs/js"
-	"github.com/reusing-code/faceoff"
+	"github.com/reusing-code/faceoff/shared/contest"
 )
 
-func getBracketOptions(r *faceoff.Roster) *js.Object {
+func getBracketOptions(r *contest.Roster) *js.Object {
 	// REALLY REALLY ugly way to do this...
-	// data := js.Global.Get("Object").New()
-	// data.Set("teams", []string{"Arsch", "Bratze", "Bongo", "Deppnase"})
-	// data.Set("results", js.Global.Call("eval", "[ [[1,2], [3,4]],[[4,6], [2,1]] ]").Interface())
 	teams := bytes.Buffer{}
 	teams.WriteString("[")
 
 	for _, currentMatch := range r.Rounds[0].Matches {
 		teams.WriteString("[\"")
-		teams.WriteString(currentMatch.Contenders[faceoff.A])
+		teams.WriteString(currentMatch.Contenders[contest.A])
 		teams.WriteString("\",\"")
-		teams.WriteString(currentMatch.Contenders[faceoff.B])
+		teams.WriteString(currentMatch.Contenders[contest.B])
 		teams.WriteString("\"],")
 	}
 
@@ -32,9 +29,9 @@ func getBracketOptions(r *faceoff.Roster) *js.Object {
 		results.WriteString("[")
 		for _, currentMatch := range currentRound.Matches {
 			results.WriteString("[")
-			results.WriteString(strconv.Itoa(currentMatch.Score[faceoff.A]))
+			results.WriteString(strconv.Itoa(currentMatch.Score[contest.A]))
 			results.WriteString(",")
-			results.WriteString(strconv.Itoa(currentMatch.Score[faceoff.B]))
+			results.WriteString(strconv.Itoa(currentMatch.Score[contest.B]))
 			results.WriteString("],")
 		}
 		results.WriteString("],")

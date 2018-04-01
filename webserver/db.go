@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/reusing-code/faceoff"
+	"github.com/reusing-code/faceoff/shared/contest"
 
 	bolt "github.com/coreos/bbolt"
 )
@@ -50,13 +50,13 @@ func CloseDB() error {
 	return db.Close()
 }
 
-func GetRoster(id string) (*faceoff.Roster, error) {
+func GetRoster(id string) (*contest.Roster, error) {
 	value, err := GetValue(id)
 	if value == nil || err != nil {
 		return nil, fmt.Errorf("No key '%s' in DB", id)
 	}
 
-	result := &faceoff.Roster{}
+	result := &contest.Roster{}
 	dec := gob.NewDecoder(bytes.NewReader(value))
 	err = dec.Decode(result)
 	return result, err
@@ -73,7 +73,7 @@ func GetValue(id string) ([]byte, error) {
 	return value, err
 }
 
-func SetRoster(id string, roster *faceoff.Roster) error {
+func SetRoster(id string, roster *contest.Roster) error {
 	buf := &bytes.Buffer{}
 	enc := gob.NewEncoder(buf)
 	err := enc.Encode(roster)
@@ -104,10 +104,10 @@ func CreateKey() string {
 	return id
 }
 
-func GetContestList() *faceoff.ContestList {
-	list := &faceoff.ContestList{
-		Open:   make([]faceoff.ContestDescription, 0),
-		Closed: make([]faceoff.ContestDescription, 0),
+func GetContestList() *contest.ContestList {
+	list := &contest.ContestList{
+		Open:   make([]contest.ContestDescription, 0),
+		Closed: make([]contest.ContestDescription, 0),
 	}
 
 	db.View(func(tx *bolt.Tx) error {
@@ -118,7 +118,7 @@ func GetContestList() *faceoff.ContestList {
 				if strings.HasSuffix(key, "_score") {
 					return nil
 				}
-				r := &faceoff.Roster{}
+				r := &contest.Roster{}
 				dec := gob.NewDecoder(bytes.NewReader(v))
 				err := dec.Decode(r)
 				if err != nil {
@@ -127,7 +127,7 @@ func GetContestList() *faceoff.ContestList {
 				if r.Private {
 					return nil
 				}
-				desc := faceoff.ContestDescription{
+				desc := contest.ContestDescription{
 					Key:  key,
 					Name: r.Name,
 				}

@@ -4,14 +4,13 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/reusing-code/faceoff"
-
 	"github.com/gopherjs/gopherjs/js"
+	"github.com/reusing-code/faceoff/shared/contest"
 	"honnef.co/go/js/dom"
 )
 
 type viewFunc func()
-type viewFuncRoster func(bracket *faceoff.Roster)
+type viewFuncRoster func(bracket *contest.Roster)
 
 type historyEntry struct {
 	addToHistory bool

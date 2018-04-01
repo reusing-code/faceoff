@@ -12,7 +12,7 @@ import (
 
 	"github.com/go-humble/locstor"
 	"github.com/gopherjs/gopherjs/js"
-	"github.com/reusing-code/faceoff"
+	"github.com/reusing-code/faceoff/shared/contest"
 	"honnef.co/go/js/dom"
 )
 
@@ -23,7 +23,7 @@ type matchViewData struct {
 	MatchNum   int
 }
 
-func adminView(remoteRoster *faceoff.Roster) {
+func adminView(remoteRoster *contest.Roster) {
 	contenderCount := 0
 	if remoteRoster.ActiveRound >= 0 {
 		contenderCount = len(remoteRoster.Rounds[remoteRoster.ActiveRound].Matches) * 2
@@ -59,7 +59,7 @@ func adminView(remoteRoster *faceoff.Roster) {
 	})
 }
 
-func bracketView(remoteRoster *faceoff.Roster) {
+func bracketView(remoteRoster *contest.Roster) {
 	activeRoster := getActiveVoteRoster(remoteRoster)
 	m := getNextMatch(activeRoster)
 	data := struct {
@@ -139,7 +139,7 @@ func bracketView(remoteRoster *faceoff.Roster) {
 	}
 }
 
-func votingView(remoteRoster *faceoff.Roster) {
+func votingView(remoteRoster *contest.Roster) {
 	currentRoster := getActiveVoteRoster(remoteRoster)
 
 	m := getNextMatch(currentRoster)
@@ -148,15 +148,15 @@ func votingView(remoteRoster *faceoff.Roster) {
 		return
 	}
 	data := matchViewData{
-		ContenderA: m.Contenders[faceoff.A],
-		ContenderB: m.Contenders[faceoff.B],
+		ContenderA: m.Contenders[contest.A],
+		ContenderB: m.Contenders[contest.B],
 		RoundNum:   remoteRoster.ActiveRound + 1,
 		MatchNum:   m.Num + 1,
 	}
 	showMatch(currentRoster, data, m)
 }
 
-func showMatch(roster *faceoff.Roster, data matchViewData, m *faceoff.Match) {
+func showMatch(roster *contest.Roster, data matchViewData, m *contest.Match) {
 	renderTemplate("matchvote", data)
 	setActiveNavItem("vote-link")
 	d := dom.GetWindow().Document()
@@ -273,7 +273,7 @@ func showContestantInputs(count int) {
 				contestants[i], contestants[j] = contestants[j], contestants[i]
 			})
 		}
-		roster, err := faceoff.CreateRoster(name, contestants)
+		roster, err := contest.CreateRoster(name, contestants)
 		if err != nil {
 			println(err)
 			return

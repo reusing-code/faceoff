@@ -45,14 +45,11 @@ func getBracketOptions(r *contest.Roster) *js.Object {
 	dataStr.Write(results.Bytes())
 	dataStr.WriteString("})")
 
-	println(dataStr.String())
-
 	data := js.Global.Call("eval", dataStr.String()).Interface()
 
 	obj := js.Global.Get("Object").New()
 	obj.Set("skipConsolationRound", true)
 	obj.Set("teamWidth", 150)
 	obj.Set("init", data)
-	println(obj)
 	return obj
 }

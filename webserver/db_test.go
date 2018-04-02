@@ -3,7 +3,9 @@ package main
 import (
 	"bytes"
 	"io/ioutil"
+	"math/rand"
 	"os"
+	"strconv"
 	"testing"
 
 	"github.com/reusing-code/faceoff/shared/contest"
@@ -177,5 +179,46 @@ func TestRoster(t *testing.T) {
 				t.Errorf("GetRoster(%q).name => %q, want %q", key, r.Name, tt.name)
 			}
 		}
+	}
+
+	_, err = GetRoster("aaaaaa")
+	if err == nil {
+		t.Errorf("GetRoster(\"aaaaaa\") => no error, want error")
+	}
+}
+
+func TestCreateKey(t *testing.T) {
+	setupDB(t)
+	defer tearDownDB(t)
+
+	backupMinKey := minKey
+	backupMaxKey := maxKey
+	minKey = 10
+	maxKey = 100
+	defer func() {
+		minKey = backupMinKey
+		maxKey = backupMaxKey
+	}()
+
+	rand.Seed(1)
+
+	createdKeys := make(map[string]bool)
+	for i := 0; i < 50; i++ {
+		key := CreateKey()
+		numKey, _ := strconv.Atoi(key)
+		if numKey < minKey || numKey > maxKey {
+			t.Errorf("CreateKey() => %q, key not in range: [%d,%d) ", key, minKey, maxKey)
+		}
+		if _, ok := createdKeys[key]; ok {
+			t.Errorf("CreateKey() => %q, key not unique", key)
+		}
+		createdKeys[key] = true
+		SetValue(key, []byte("a"))
+	}
+
+	rand.Seed(1)
+	key := CreateKey()
+	if _, ok := createdKeys[key]; ok {
+		t.Errorf("CreateKey() => %q, key not unique", key)
 	}
 }

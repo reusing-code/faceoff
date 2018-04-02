@@ -13,10 +13,11 @@
 # Project-local glide cache, RE: https://github.com/Masterminds/glide/issues/736
 .glide/
 
-*.db
+# Magefile output
+mage_output_file.go
 
-package
+# VScode
+.vscode
 
-client/client.js
-client/client.js.map
-webserver/webserver
+# stupid osx
+.DS_Store

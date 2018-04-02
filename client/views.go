@@ -106,7 +106,6 @@ func bracketView(remoteRoster *contest.Roster) {
 		btnRefresh.AddEventListener("click", false, func(event dom.Event) {
 			route("/bracket", false)
 		})
-		btnRefresh.(*dom.HTMLButtonElement).Disabled = true
 	}
 
 	var err error
@@ -125,16 +124,10 @@ func bracketView(remoteRoster *contest.Roster) {
 			}
 		})
 		websocket.AddEventListener("close", false, func(ev *js.Object) {
-			btnRefresh := dom.GetWindow().Document().GetElementByID("btn-bracket")
-			if btnRefresh != nil {
-				btnRefresh.(*dom.HTMLButtonElement).Disabled = false
-			}
+			println("Websocket closed")
 		})
 		websocket.AddEventListener("error", false, func(ev *js.Object) {
-			btnRefresh := dom.GetWindow().Document().GetElementByID("btn-bracket")
-			if btnRefresh != nil {
-				btnRefresh.(*dom.HTMLButtonElement).Disabled = false
-			}
+			println("Websocket error")
 		})
 	}
 }

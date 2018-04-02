@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/reusing-code/faceoff/webserver/websockets"
+
 	"github.com/gorilla/mux"
 
 	"github.com/reusing-code/faceoff/shared/contest"
@@ -30,8 +32,9 @@ func main() {
 	xhr.HandleFunc("/advance-round", roundAdvanceHandler)
 	xhr.HandleFunc("/commit-new-roster", newRosterHandler)
 
+	websockets.RegisterRoutes(router.PathPrefix("ws").Subrouter())
+
 	router.HandleFunc("/rosterlist.json", rosterListHandler)
-	router.HandleFunc("/ws/{key:[0-9]+}", ServeWs)
 	router.HandleFunc("/templates", templateHandler)
 	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	router.PathPrefix("/").HandlerFunc(indexHandler)
@@ -110,7 +113,7 @@ func voteHandler(w http.ResponseWriter, r *http.Request) {
 		roster.CurrentVotes++
 		SetRoster(GetScoreKey(key), scoreRoster)
 		SetRoster(key, roster)
-		TriggerUpdate(key)
+		websockets.TriggerUpdate(key)
 	}
 }
 
@@ -132,7 +135,7 @@ func roundAdvanceHandler(w http.ResponseWriter, r *http.Request) {
 		scoreRoster.AdvanceRound()
 		SetRoster(key, scoreRoster)
 		SetRoster(GetScoreKey(key), scoreRoster)
-		TriggerUpdate(key)
+		websockets.TriggerUpdate(key)
 	}
 }
 

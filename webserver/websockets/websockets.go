@@ -1,4 +1,4 @@
-package main
+package websockets
 
 import (
 	"log"
@@ -9,6 +9,10 @@ import (
 
 	"github.com/gorilla/websocket"
 )
+
+func RegisterRoutes(router *mux.Router) {
+	router.HandleFunc("/{key:[0-9]+}", ServeWs)
+}
 
 func ServeWs(w http.ResponseWriter, r *http.Request) {
 	key := mux.Vars(r)["key"]

@@ -1,14 +1,11 @@
 package contest
 
 import (
-	"bufio"
-	"bytes"
 	"encoding/json"
 	"errors"
 	"io"
 	"io/ioutil"
 	"math/rand"
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -56,19 +53,7 @@ func init() {
 	rand.Seed(time.Now().UTC().UnixNano())
 }
 
-func CreateRosterRaw(name string, participants []byte) (*Roster, error) {
-	buf := bufio.NewScanner(bytes.NewReader(participants))
-	partSlice := make([]string, 0, 16)
-	for buf.Scan() {
-		name := strings.TrimSpace(buf.Text())
-		if len(name) > 1 {
-			partSlice = append(partSlice, name)
-		}
-	}
-	return CreateRoster(name, partSlice)
-}
-
-func CreateRoster(name string, participants []string) (*Roster, error) {
+func CreateRoster(name string, participants []string, private bool) (*Roster, error) {
 	l := len(participants)
 	// very ugly, but good enough for now
 	if l != 2 && l != 4 && l != 8 && l != 16 && l != 32 {
@@ -82,6 +67,7 @@ func CreateRoster(name string, participants []string) (*Roster, error) {
 	res.Rounds = append(res.Rounds, round)
 	id, _ := uuid.New().MarshalBinary()
 	res.UUID = id
+	res.Private = private
 	return res, nil
 
 }

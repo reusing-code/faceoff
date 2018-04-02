@@ -266,14 +266,16 @@ func showContestantInputs(count int) {
 				contestants[i], contestants[j] = contestants[j], contestants[i]
 			})
 		}
-		roster, err := contest.CreateRoster(name, contestants)
+		private := false
+		if d.GetElementByID("radio-private").(*dom.HTMLInputElement).Checked {
+			private = true
+		}
+		roster, err := contest.CreateRoster(name, contestants, private)
 		if err != nil {
 			println(err)
 			return
 		}
-		if d.GetElementByID("radio-private").(*dom.HTMLInputElement).Checked {
-			roster.Private = true
-		}
+
 		go commitNewRoster(roster)
 	})
 }

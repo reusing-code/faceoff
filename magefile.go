@@ -50,6 +50,8 @@ func Build() error {
 	// build server
 	cmd := exec.Command("go", "build", "-v")
 	cmd.Dir = "webserver"
+	cmd.Stderr = os.Stderr
+	cmd.Stdout = os.Stdout
 	err := cmd.Run()
 	if err != nil {
 		return err
@@ -59,6 +61,8 @@ func Build() error {
 	// @TODO non minified compilation for development
 	cmd = exec.Command("gopherjs", "build", "-m")
 	cmd.Dir = "client"
+	cmd.Stderr = os.Stderr
+	cmd.Stdout = os.Stdout
 	return cmd.Run()
 }
 

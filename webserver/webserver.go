@@ -4,10 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"flag"
-	"io/ioutil"
 	"log"
 	"net/http"
-	"os"
 	"strconv"
 
 	"github.com/gorilla/mux"
@@ -63,23 +61,6 @@ func templateHandler(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func createRoster(filename string) *contest.Roster {
-	f, err := os.Open(filename)
-	defer f.Close()
-	if err != nil {
-		panic(err)
-	}
-	b, err := ioutil.ReadAll(f)
-	if err != nil {
-		panic(err)
-	}
-	r, err := contest.CreateRosterRaw("Default", b)
-	if err != nil {
-		panic(err)
-	}
-	return r
-}
-
 func rosterHandler(w http.ResponseWriter, r *http.Request) {
 	key := mux.Vars(r)["key"]
 	roster, err := GetRoster(key)
@@ -116,7 +97,7 @@ func voteHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		return
 	}
-	scoreRoster, err := GetRoster(scoreKey(key))
+	scoreRoster, err := GetRoster(GetScoreKey(key))
 	if err != nil {
 		return
 	}
@@ -127,7 +108,7 @@ func voteHandler(w http.ResponseWriter, r *http.Request) {
 	if bytes.Compare(voteRoster.UUID, scoreRoster.UUID) == 0 {
 		scoreRoster.AddVotes(voteRoster)
 		roster.CurrentVotes++
-		SetRoster(scoreKey(key), scoreRoster)
+		SetRoster(GetScoreKey(key), scoreRoster)
 		SetRoster(key, roster)
 		TriggerUpdate(key)
 	}
@@ -143,14 +124,14 @@ func roundAdvanceHandler(w http.ResponseWriter, r *http.Request) {
 	b.ReadFrom(r.Body)
 	id := b.Bytes()
 	r.Body.Close()
-	scoreRoster, err := GetRoster(scoreKey(key))
+	scoreRoster, err := GetRoster(GetScoreKey(key))
 	if err != nil {
 		return
 	}
 	if bytes.Compare(id, scoreRoster.UUID) == 0 {
 		scoreRoster.AdvanceRound()
 		SetRoster(key, scoreRoster)
-		SetRoster(scoreKey(key), scoreRoster)
+		SetRoster(GetScoreKey(key), scoreRoster)
 		TriggerUpdate(key)
 	}
 }
@@ -173,14 +154,10 @@ func newRosterHandler(w http.ResponseWriter, r *http.Request) {
 
 	key := CreateKey()
 	SetRoster(key, roster)
-	SetRoster(scoreKey(key), roster)
+	SetRoster(GetScoreKey(key), roster)
 
 	w.Write([]byte(key))
 
-}
-
-func scoreKey(key string) string {
-	return key + "_score"
 }
 
 func rosterListHandler(w http.ResponseWriter, r *http.Request) {

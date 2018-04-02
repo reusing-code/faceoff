@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/gob"
+	"errors"
 	"fmt"
 	"math/rand"
 	"os"
@@ -20,6 +21,8 @@ var db *bolt.DB
 
 const bucketName = "BracketBucket"
 
+const scoreSuffix = "_score"
+
 func init() {
 	rand.Seed(time.Now().UTC().UnixNano())
 }
@@ -27,9 +30,12 @@ func init() {
 func OpenDB(path string) error {
 	var err error
 	dir, _ := pathpkg.Split(path)
-	err = os.MkdirAll(dir, 0755)
-	if err != nil {
-		return err
+
+	if len(dir) > 0 {
+		err = os.MkdirAll(dir, 0755)
+		if err != nil {
+			return err
+		}
 	}
 	db, err = bolt.Open(path, 0644, nil)
 	if err != nil {
@@ -47,7 +53,10 @@ func OpenDB(path string) error {
 }
 
 func CloseDB() error {
-	return db.Close()
+	if db != nil {
+		return db.Close()
+	}
+	return nil
 }
 
 func GetRoster(id string) (*contest.Roster, error) {
@@ -67,28 +76,38 @@ func GetValue(id string) ([]byte, error) {
 	var value []byte
 	err := db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(bucketName))
-		value = b.Get([]byte(key))
+		res := b.Get([]byte(key))
+		if res != nil {
+			// result slice of Get is only valid inside this transaction.
+			value = make([]byte, len(res))
+			copy(value, res)
+		}
+
 		return nil
 	})
 	return value, err
 }
 
+func SetValue(id string, value []byte) error {
+	err := db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(bucketName))
+		err := b.Put([]byte(id), value)
+		return err
+	})
+	return err
+}
+
 func SetRoster(id string, roster *contest.Roster) error {
+	if roster == nil {
+		return errors.New("SetRoster(): Roster was nil")
+	}
 	buf := &bytes.Buffer{}
 	enc := gob.NewEncoder(buf)
 	err := enc.Encode(roster)
 	if err != nil {
 		return err
 	}
-	value := buf.Bytes()
-	key := []byte(id)
-
-	err = db.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(bucketName))
-		err := b.Put(key, value)
-		return err
-	})
-	return err
+	return SetValue(id, buf.Bytes())
 }
 
 func CreateKey() string {
@@ -104,6 +123,10 @@ func CreateKey() string {
 	return id
 }
 
+func GetScoreKey(key string) string {
+	return key + scoreSuffix
+}
+
 func GetContestList() *contest.ContestList {
 	list := &contest.ContestList{
 		Open:   make([]contest.ContestDescription, 0),
@@ -115,7 +138,7 @@ func GetContestList() *contest.ContestList {
 		b.ForEach(func(k, v []byte) error {
 			if k != nil && v != nil {
 				key := string(k)
-				if strings.HasSuffix(key, "_score") {
+				if strings.HasSuffix(key, scoreSuffix) {
 					return nil
 				}
 				r := &contest.Roster{}

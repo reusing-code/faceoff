@@ -24,6 +24,12 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	router := CreateRouter()
+	http.Handle("/", router)
+	log.Fatal(http.ListenAndServe(":"+strconv.Itoa(*port), nil))
+}
+
+func CreateRouter() *mux.Router {
 
 	router := mux.NewRouter()
 	xhr := router.PathPrefix("/xhr/{key:[0-9]+}").Subrouter()
@@ -39,8 +45,7 @@ func main() {
 	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	router.PathPrefix("/").HandlerFunc(indexHandler)
 
-	http.Handle("/", router)
-	log.Fatal(http.ListenAndServe(":"+strconv.Itoa(*port), nil))
+	return router
 }
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {

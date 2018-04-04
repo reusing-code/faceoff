@@ -1,12 +1,16 @@
 package main
 
 import (
+	"bytes"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path"
 	"strings"
 	"testing"
+
+	"github.com/gorilla/mux"
+	"github.com/reusing-code/faceoff/shared/contest"
 
 	"github.com/reusing-code/faceoff/shared/templates"
 )
@@ -92,6 +96,54 @@ func TestTemplateHandler(t *testing.T) {
 		t.Errorf("not enough templates : got %v want >5",
 			len(ts.Templates))
 	}
+}
+
+func TestRosterHandler(t *testing.T) {
+	setupDB(t)
+	defer tearDownDB(t)
+
+	roster, _ := contest.CreateRoster("TestRoster", []string{"A", "TestNameB", "C", "D"}, false)
+	SetRoster("123", roster)
+
+	r := mux.NewRouter()
+	r.HandleFunc("/xhr/{key:[0-9]+}", http.HandlerFunc(rosterHandler))
+
+	ts := httptest.NewServer(r)
+	defer ts.Close()
+
+	tt := []struct {
+		key   string
+		valid bool
+	}{
+		{"555", false},
+		{"123", true},
+	}
+
+	for _, tc := range tt {
+		url := ts.URL + "/xhr/" + tc.key
+		resp, err := http.Get(url)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if tc.valid {
+			if status := resp.StatusCode; status != http.StatusOK {
+				t.Errorf("wrong status code: got %d want %d", status, http.StatusOK)
+			}
+			buf := &bytes.Buffer{}
+			buf.ReadFrom(resp.Body)
+			resp.Body.Close()
+			body := buf.String()
+			if expString := "TestNameB"; !strings.Contains(body, expString) {
+				t.Errorf("Response body does not contain %q", expString)
+			}
+		} else {
+			if status := resp.StatusCode; status != http.StatusNotFound {
+				t.Errorf("wrong status code: got %d want %d", status, http.StatusNotFound)
+			}
+		}
+	}
+
 }
 
 func TestRouter(t *testing.T) {

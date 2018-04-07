@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"flag"
+	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 
 	"github.com/gorilla/mux"
@@ -33,7 +35,7 @@ func main() {
 	router.HandleFunc("/rosterlist.json", rosterListHandler)
 	router.HandleFunc("/ws/{key:[0-9]+}", ServeWs)
 	router.HandleFunc("/templates", templateHandler)
-	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
+	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", getStaticHandler()))
 	router.PathPrefix("/").HandlerFunc(indexHandler)
 
 	http.Handle("/", router)
@@ -173,4 +175,24 @@ func rosterListHandler(w http.ResponseWriter, r *http.Request) {
 		handleError(w, err)
 		return
 	}
+}
+
+func getStaticHandler() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		info, err := os.Stat("static/" + r.URL.Path)
+		if err == nil {
+			tag := fmt.Sprintf("%d", info.ModTime().Unix())
+			if match := r.Header.Get("If-None-Match"); match != "" {
+				if tag == match {
+					w.WriteHeader(http.StatusNotModified)
+					return
+				}
+			}
+			w.Header().Set("Etag", tag)
+			w.Header().Set("Cache-Control", "max-age=600")
+		}
+		http.FileServer(http.Dir("static")).ServeHTTP(w, r)
+	})
+
 }

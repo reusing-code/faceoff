@@ -1,5 +1,7 @@
 # faceoff
 
+[![Build Status](https://travis-ci.org/reusing-code/faceoff.svg?branch=master)](https://travis-ci.org/reusing-code/faceoff)
+
 faceoff is a small web app to decide *what is better* through an elemination tournament in one-against-one decision votings.
 
 A live demo can be seen at [whatisbetter.de](https://whatisbetter.de) (currently only in german, sorry)

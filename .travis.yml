@@ -1,4 +1,4 @@
   language: go
   go:
     - "1.10"
-  install: true
+  install: go get -v github.com/gopherjs/gopherjs

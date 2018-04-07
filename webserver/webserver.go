@@ -99,6 +99,11 @@ func handleNotFound(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("404 - " + r.URL.Path))
 }
 
+func handleBadRequest(w http.ResponseWriter, message string) {
+	w.WriteHeader(http.StatusBadRequest)
+	w.Write([]byte("400 - " + message))
+}
+
 func voteHandler(w http.ResponseWriter, r *http.Request) {
 	key := mux.Vars(r)["key"]
 	voteRoster, err := contest.ParseRoster(r.Body)
@@ -146,7 +151,7 @@ func roundAdvanceHandler(w http.ResponseWriter, r *http.Request) {
 
 func newRosterHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
-		println("/commit-new-roster called with " + r.Method + ". Ignoring")
+		handleBadRequest(w, "/commit-new-roster called with "+r.Method+". Ignoring")
 		return
 	}
 	b := &bytes.Buffer{}
@@ -156,7 +161,7 @@ func newRosterHandler(w http.ResponseWriter, r *http.Request) {
 	roster := &contest.Roster{}
 	err := json.Unmarshal(b.Bytes(), roster)
 	if err != nil {
-		println("Bad data in /commit-new-roster: " + err.Error())
+		handleBadRequest(w, "Bad data in /commit-new-roster: "+err.Error())
 		return
 	}
 

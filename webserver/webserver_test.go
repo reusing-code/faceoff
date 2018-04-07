@@ -105,6 +105,11 @@ func TestRosterHandler(t *testing.T) {
 	roster, _ := contest.CreateRoster("TestRoster", []string{"A", "TestNameB", "C", "D"}, false)
 	SetRoster("123", roster)
 
+	err := SetValue("456", []byte("notarosternotaroster"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	r := mux.NewRouter()
 	r.HandleFunc("/xhr/{key:[0-9]+}", http.HandlerFunc(rosterHandler))
 
@@ -112,11 +117,12 @@ func TestRosterHandler(t *testing.T) {
 	defer ts.Close()
 
 	tt := []struct {
-		key   string
-		valid bool
+		key        string
+		statuscode int
 	}{
-		{"555", false},
-		{"123", true},
+		{"555", http.StatusNotFound},
+		{"123", http.StatusOK},
+		{"456", http.StatusNotFound},
 	}
 
 	for _, tc := range tt {
@@ -126,10 +132,11 @@ func TestRosterHandler(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if tc.valid {
-			if status := resp.StatusCode; status != http.StatusOK {
-				t.Errorf("wrong status code: got %d want %d", status, http.StatusOK)
-			}
+		if status := resp.StatusCode; status != tc.statuscode {
+			t.Errorf("wrong status code: got %d want %d", status, tc.statuscode)
+			continue
+		}
+		if tc.statuscode == http.StatusOK {
 			buf := &bytes.Buffer{}
 			buf.ReadFrom(resp.Body)
 			resp.Body.Close()
@@ -137,13 +144,38 @@ func TestRosterHandler(t *testing.T) {
 			if expString := "TestNameB"; !strings.Contains(body, expString) {
 				t.Errorf("Response body does not contain %q", expString)
 			}
-		} else {
-			if status := resp.StatusCode; status != http.StatusNotFound {
-				t.Errorf("wrong status code: got %d want %d", status, http.StatusNotFound)
-			}
 		}
 	}
 
+}
+
+func TestNewRosterHandler(t *testing.T) {
+	setupDB(t)
+	defer tearDownDB(t)
+	req, err := http.NewRequest("GET", "/", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(newRosterHandler)
+
+	handler.ServeHTTP(rr, req)
+
+	if status, expetedStatus := rr.Code, http.StatusBadRequest; status != expetedStatus {
+		t.Errorf("handler returned wrong status code: got %v want %v",
+			status, expetedStatus)
+	}
+	buf := bytes.NewBufferString("notaroster")
+	req, err = http.NewRequest("POST", "/", buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rr = httptest.NewRecorder()
+	handler.ServeHTTP(rr, req)
+	if status, expetedStatus := rr.Code, http.StatusBadRequest; status != expetedStatus {
+		t.Errorf("handler returned wrong status code: got %v want %v",
+			status, expetedStatus)
+	}
 }
 
 func TestRouter(t *testing.T) {

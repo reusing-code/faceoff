@@ -2,10 +2,12 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -175,6 +177,138 @@ func TestNewRosterHandler(t *testing.T) {
 	if status, expetedStatus := rr.Code, http.StatusBadRequest; status != expetedStatus {
 		t.Errorf("handler returned wrong status code: got %v want %v",
 			status, expetedStatus)
+	}
+
+	roster, _ := contest.CreateRoster("TestRoster", []string{"A", "TestNameB", "C", "D"}, false)
+	b, _ := json.Marshal(roster)
+	req, err = http.NewRequest("POST", "/", bytes.NewBuffer(b))
+	if err != nil {
+		t.Fatal(err)
+	}
+	rr = httptest.NewRecorder()
+	handler.ServeHTTP(rr, req)
+	if status, expetedStatus := rr.Code, http.StatusOK; status != expetedStatus {
+		t.Errorf("handler returned wrong status code: got %v want %v",
+			status, expetedStatus)
+	}
+	newKey := rr.Body.String()
+	if len(newKey) < 3 || len(newKey) > 15 {
+		t.Errorf("Unexpected new key %q", newKey)
+	}
+}
+
+func TestRosterListHandler(t *testing.T) {
+	setupDB(t)
+	defer tearDownDB(t)
+
+	roster, _ := contest.CreateRoster("TestRoster", []string{"A", "TestNameB", "C", "D"}, false)
+	SetRoster("123", roster)
+
+	req, err := http.NewRequest("GET", "/", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(rosterListHandler)
+
+	handler.ServeHTTP(rr, req)
+
+	expecetdList := GetContestList()
+	var receivedList contest.ContestList
+
+	err = json.Unmarshal(rr.Body.Bytes(), &receivedList)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !reflect.DeepEqual(expecetdList, &receivedList) {
+		t.Errorf("received list not equal to expected list")
+	}
+}
+
+func TestVoteHandler(t *testing.T) {
+	setupDB(t)
+	defer tearDownDB(t)
+
+	roster, _ := contest.CreateRoster("TestRoster", []string{"A", "TestNameB", "C", "D"}, false)
+	SetRoster("123", roster)
+	SetRoster(GetScoreKey("123"), roster)
+
+	SetRoster("789", roster) // no score roster
+
+	roster.Rounds[0].Matches[0].WinB()
+	roster.Rounds[0].Matches[1].WinA()
+
+	voteJson, _ := json.Marshal(roster)
+
+	r := mux.NewRouter()
+	r.HandleFunc("/xhr/{key:[0-9]+}", http.HandlerFunc(voteHandler))
+
+	ts := httptest.NewServer(r)
+	defer ts.Close()
+
+	tt := []struct {
+		key        string
+		data       []byte
+		statuscode int
+	}{
+		{"123", voteJson, http.StatusOK},
+		{"123", []byte("foobar"), http.StatusBadRequest},
+		{"456", voteJson, http.StatusNotFound},
+		{"789", voteJson, http.StatusNotFound},
+	}
+
+	for _, tc := range tt {
+		url := ts.URL + "/xhr/" + tc.key
+		resp, err := http.Post(url, "application/json", bytes.NewBuffer(tc.data))
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if status := resp.StatusCode; status != tc.statuscode {
+			t.Errorf("wrong status code: got %d want %d", status, tc.statuscode)
+			continue
+		}
+	}
+}
+
+func TestAdvanceRoundHandler(t *testing.T) {
+	setupDB(t)
+	defer tearDownDB(t)
+
+	roster, _ := contest.CreateRoster("TestRoster", []string{"A", "TestNameB", "C", "D"}, false)
+	roster.Rounds[0].Matches[0].WinB()
+	roster.Rounds[0].Matches[1].WinA()
+	SetRoster("123", roster)
+	SetRoster(GetScoreKey("123"), roster)
+
+	r := mux.NewRouter()
+	r.HandleFunc("/xhr/{key:[0-9]+}", http.HandlerFunc(roundAdvanceHandler))
+
+	ts := httptest.NewServer(r)
+	defer ts.Close()
+
+	tt := []struct {
+		key        string
+		data       []byte
+		statuscode int
+	}{
+		{"123", roster.UUID, http.StatusOK},
+		{"123", []byte("foobar"), http.StatusBadRequest},
+		{"456", roster.UUID, http.StatusNotFound},
+	}
+
+	for _, tc := range tt {
+		url := ts.URL + "/xhr/" + tc.key
+		resp, err := http.Post(url, "application/json", bytes.NewBuffer(tc.data))
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if status := resp.StatusCode; status != tc.statuscode {
+			t.Errorf("wrong status code: got %d want %d", status, tc.statuscode)
+			continue
+		}
 	}
 }
 

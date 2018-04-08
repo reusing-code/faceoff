@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"flag"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -82,11 +83,7 @@ func rosterHandler(w http.ResponseWriter, r *http.Request) {
 		handleError(w, err)
 		return
 	}
-	_, err = w.Write(b)
-	if err != nil {
-		handleError(w, err)
-		return
-	}
+	w.Write(b)
 }
 
 func handleError(w http.ResponseWriter, err error) {
@@ -106,18 +103,25 @@ func handleBadRequest(w http.ResponseWriter, message string) {
 
 func voteHandler(w http.ResponseWriter, r *http.Request) {
 	key := mux.Vars(r)["key"]
-	voteRoster, err := contest.ParseRoster(r.Body)
-	if err != nil {
-		return
-	}
-	scoreRoster, err := GetRoster(GetScoreKey(key))
-	if err != nil {
-		return
-	}
+
 	roster, err := GetRoster(key)
 	if err != nil {
+		handleNotFound(w, r)
 		return
 	}
+
+	scoreRoster, err := GetRoster(GetScoreKey(key))
+	if err != nil {
+		handleNotFound(w, r)
+		return
+	}
+
+	voteRoster, err := contest.ParseRoster(r.Body)
+	if err != nil {
+		handleBadRequest(w, "malformed request. Contest json not parseable")
+		return
+	}
+
 	if bytes.Compare(voteRoster.UUID, scoreRoster.UUID) == 0 {
 		scoreRoster.AddVotes(voteRoster)
 		roster.CurrentVotes++
@@ -129,16 +133,14 @@ func voteHandler(w http.ResponseWriter, r *http.Request) {
 
 func roundAdvanceHandler(w http.ResponseWriter, r *http.Request) {
 	key := mux.Vars(r)["key"]
-	if r.Method != "POST" {
-		println("/advance-round called with " + r.Method + ". Ignoring")
-		return
-	}
+
 	b := &bytes.Buffer{}
 	b.ReadFrom(r.Body)
 	id := b.Bytes()
 	r.Body.Close()
 	scoreRoster, err := GetRoster(GetScoreKey(key))
 	if err != nil {
+		handleNotFound(w, r)
 		return
 	}
 	if bytes.Compare(id, scoreRoster.UUID) == 0 {
@@ -146,6 +148,9 @@ func roundAdvanceHandler(w http.ResponseWriter, r *http.Request) {
 		SetRoster(key, scoreRoster)
 		SetRoster(GetScoreKey(key), scoreRoster)
 		websockets.TriggerUpdate(key)
+	} else {
+		handleBadRequest(w, fmt.Sprintf("roundAdvanceHandler: Invalid UUID %q", string(id)))
+		return
 	}
 }
 
@@ -181,9 +186,5 @@ func rosterListHandler(w http.ResponseWriter, r *http.Request) {
 		handleError(w, err)
 		return
 	}
-	_, err = w.Write(b)
-	if err != nil {
-		handleError(w, err)
-		return
-	}
+	w.Write(b)
 }

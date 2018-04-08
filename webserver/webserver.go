@@ -10,6 +10,8 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/reusing-code/faceoff/webserver/websockets"
+
 	"github.com/gorilla/mux"
 
 	"github.com/reusing-code/faceoff/shared/contest"
@@ -24,6 +26,12 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	router := CreateRouter()
+	http.Handle("/", router)
+	log.Fatal(http.ListenAndServe(":"+strconv.Itoa(*port), nil))
+}
+
+func CreateRouter() *mux.Router {
 
 	router := mux.NewRouter()
 	xhr := router.PathPrefix("/xhr/{key:[0-9]+}").Subrouter()
@@ -32,14 +40,14 @@ func main() {
 	xhr.HandleFunc("/advance-round", roundAdvanceHandler)
 	xhr.HandleFunc("/commit-new-roster", newRosterHandler)
 
+	websockets.RegisterRoutes(router.PathPrefix("ws").Subrouter())
+
 	router.HandleFunc("/rosterlist.json", rosterListHandler)
-	router.HandleFunc("/ws/{key:[0-9]+}", ServeWs)
 	router.HandleFunc("/templates", templateHandler)
 	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", getStaticHandler()))
 	router.PathPrefix("/").HandlerFunc(indexHandler)
 
-	http.Handle("/", router)
-	log.Fatal(http.ListenAndServe(":"+strconv.Itoa(*port), nil))
+	return router
 }
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
@@ -76,11 +84,7 @@ func rosterHandler(w http.ResponseWriter, r *http.Request) {
 		handleError(w, err)
 		return
 	}
-	_, err = w.Write(b)
-	if err != nil {
-		handleError(w, err)
-		return
-	}
+	w.Write(b)
 }
 
 func handleError(w http.ResponseWriter, err error) {
@@ -93,54 +97,67 @@ func handleNotFound(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("404 - " + r.URL.Path))
 }
 
+func handleBadRequest(w http.ResponseWriter, message string) {
+	w.WriteHeader(http.StatusBadRequest)
+	w.Write([]byte("400 - " + message))
+}
+
 func voteHandler(w http.ResponseWriter, r *http.Request) {
 	key := mux.Vars(r)["key"]
-	voteRoster, err := contest.ParseRoster(r.Body)
-	if err != nil {
-		return
-	}
-	scoreRoster, err := GetRoster(GetScoreKey(key))
-	if err != nil {
-		return
-	}
+
 	roster, err := GetRoster(key)
 	if err != nil {
+		handleNotFound(w, r)
 		return
 	}
+
+	scoreRoster, err := GetRoster(GetScoreKey(key))
+	if err != nil {
+		handleNotFound(w, r)
+		return
+	}
+
+	voteRoster, err := contest.ParseRoster(r.Body)
+	if err != nil {
+		handleBadRequest(w, "malformed request. Contest json not parseable")
+		return
+	}
+
 	if bytes.Compare(voteRoster.UUID, scoreRoster.UUID) == 0 {
 		scoreRoster.AddVotes(voteRoster)
 		roster.CurrentVotes++
 		SetRoster(GetScoreKey(key), scoreRoster)
 		SetRoster(key, roster)
-		TriggerUpdate(key)
+		websockets.TriggerUpdate(key)
 	}
 }
 
 func roundAdvanceHandler(w http.ResponseWriter, r *http.Request) {
 	key := mux.Vars(r)["key"]
-	if r.Method != "POST" {
-		println("/advance-round called with " + r.Method + ". Ignoring")
-		return
-	}
+
 	b := &bytes.Buffer{}
 	b.ReadFrom(r.Body)
 	id := b.Bytes()
 	r.Body.Close()
 	scoreRoster, err := GetRoster(GetScoreKey(key))
 	if err != nil {
+		handleNotFound(w, r)
 		return
 	}
 	if bytes.Compare(id, scoreRoster.UUID) == 0 {
 		scoreRoster.AdvanceRound()
 		SetRoster(key, scoreRoster)
 		SetRoster(GetScoreKey(key), scoreRoster)
-		TriggerUpdate(key)
+		websockets.TriggerUpdate(key)
+	} else {
+		handleBadRequest(w, fmt.Sprintf("roundAdvanceHandler: Invalid UUID %q", string(id)))
+		return
 	}
 }
 
 func newRosterHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
-		println("/commit-new-roster called with " + r.Method + ". Ignoring")
+		handleBadRequest(w, "/commit-new-roster called with "+r.Method+". Ignoring")
 		return
 	}
 	b := &bytes.Buffer{}
@@ -150,7 +167,7 @@ func newRosterHandler(w http.ResponseWriter, r *http.Request) {
 	roster := &contest.Roster{}
 	err := json.Unmarshal(b.Bytes(), roster)
 	if err != nil {
-		println("Bad data in /commit-new-roster: " + err.Error())
+		handleBadRequest(w, "Bad data in /commit-new-roster: "+err.Error())
 		return
 	}
 
@@ -170,11 +187,7 @@ func rosterListHandler(w http.ResponseWriter, r *http.Request) {
 		handleError(w, err)
 		return
 	}
-	_, err = w.Write(b)
-	if err != nil {
-		handleError(w, err)
-		return
-	}
+	w.Write(b)
 }
 
 func getStaticHandler() http.Handler {

@@ -23,6 +23,9 @@ const bucketName = "BracketBucket"
 
 const scoreSuffix = "_score"
 
+var minKey = 10000000
+var maxKey = 100000000
+
 func init() {
 	rand.Seed(time.Now().UTC().UnixNano())
 }
@@ -112,8 +115,8 @@ func SetRoster(id string, roster *contest.Roster) error {
 
 func CreateKey() string {
 	var rnd int
-	for rnd < 10000000 {
-		rnd = rand.Intn(100000000)
+	for rnd < minKey {
+		rnd = rand.Intn(maxKey)
 	}
 	id := strconv.Itoa(rnd)
 	value, _ := GetValue(id)

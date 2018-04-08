@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -24,7 +25,7 @@ func fixWorkingDir() {
 	}
 }
 
-func unfixWorkingDir() {
+func resetWorkingDir() {
 	pwd, _ := os.Getwd()
 	if path.Base(pwd) != "webserver" {
 		os.Chdir("webserver")
@@ -41,6 +42,7 @@ var expectedIndexContent = []struct {
 
 func TestIndexHandler(t *testing.T) {
 	fixWorkingDir()
+	defer resetWorkingDir()
 	req, err := http.NewRequest("GET", "/", nil)
 	if err != nil {
 		t.Fatal(err)
@@ -64,7 +66,6 @@ func TestIndexHandler(t *testing.T) {
 }
 
 func TestTemplateHandler(t *testing.T) {
-	unfixWorkingDir()
 	req, err := http.NewRequest("GET", "/", nil)
 	if err != nil {
 		t.Fatal(err)
@@ -80,6 +81,7 @@ func TestTemplateHandler(t *testing.T) {
 	}
 
 	fixWorkingDir()
+	defer resetWorkingDir()
 
 	rr = httptest.NewRecorder()
 
@@ -312,8 +314,49 @@ func TestAdvanceRoundHandler(t *testing.T) {
 	}
 }
 
+func TestStaticHandler(t *testing.T) {
+	expContent := []byte("testcontent")
+	os.MkdirAll("static/", 0755)
+	ioutil.WriteFile("static/testfile", expContent, 0644)
+	defer os.RemoveAll("static")
+
+	req, err := http.NewRequest("GET", "/testfile", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rr := httptest.NewRecorder()
+	handler := getStaticHandler()
+
+	handler.ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusOK {
+		t.Errorf("handler returned wrong status code: got %v want %v",
+			status, http.StatusOK)
+	}
+
+	etag := rr.Header().Get("Etag")
+	if etag == "" {
+		t.Fatalf("Wanted Etag in header. Got none")
+	}
+	receivedContent := rr.Body.Bytes()
+	if bytes.Compare(receivedContent, expContent) != 0 {
+		t.Errorf("Wrong body content. Want %q got %q", string(expContent), string(receivedContent))
+	}
+
+	req.Header.Set("If-None-Match", etag)
+	rr = httptest.NewRecorder()
+	handler.ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusNotModified {
+		t.Errorf("handler returned wrong status code: got %v want %v",
+			status, http.StatusNotModified)
+	}
+}
+
 func TestRouter(t *testing.T) {
 	fixWorkingDir()
+	defer resetWorkingDir()
 	// this is not really testing a lot just if the router is functional
 	router := CreateRouter()
 	req, err := http.NewRequest("GET", "/THIS/IS/JUST/A/TEST", nil)

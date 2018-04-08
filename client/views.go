@@ -8,10 +8,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gopherjs/websocket/websocketjs"
-
 	"github.com/go-humble/locstor"
 	"github.com/gopherjs/gopherjs/js"
+	"github.com/gopherjs/websocket/websocketjs"
 	"github.com/reusing-code/faceoff/shared/contest"
 	"honnef.co/go/js/dom"
 )

@@ -10,12 +10,10 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/reusing-code/faceoff/webserver/websockets"
-
 	"github.com/gorilla/mux"
-
 	"github.com/reusing-code/faceoff/shared/contest"
 	"github.com/reusing-code/faceoff/shared/templates"
+	"github.com/reusing-code/faceoff/webserver/websockets"
 )
 
 func main() {
@@ -195,7 +193,7 @@ func getStaticHandler() http.Handler {
 
 		info, err := os.Stat("static/" + r.URL.Path)
 		if err == nil {
-			tag := fmt.Sprintf("%d", info.ModTime().Unix())
+			tag := fmt.Sprintf("%d", info.ModTime().UnixNano())
 			if match := r.Header.Get("If-None-Match"); match != "" {
 				if tag == match {
 					w.WriteHeader(http.StatusNotModified)

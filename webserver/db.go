@@ -139,29 +139,30 @@ func GetContestList() *contest.ContestList {
 	db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(bucketName))
 		b.ForEach(func(k, v []byte) error {
-			if k != nil && v != nil {
-				key := string(k)
-				if strings.HasSuffix(key, scoreSuffix) {
-					return nil
-				}
-				r := &contest.Roster{}
-				dec := gob.NewDecoder(bytes.NewReader(v))
-				err := dec.Decode(r)
-				if err != nil {
-					return err
-				}
-				if r.Private {
-					return nil
-				}
-				desc := contest.ContestDescription{
-					Key:  key,
-					Name: r.Name,
-				}
-				if r.ActiveRound < 0 {
-					list.Closed = append(list.Closed, desc)
-				} else {
-					list.Open = append(list.Open, desc)
-				}
+			if k == nil || v == nil {
+				return nil
+			}
+			key := string(k)
+			if strings.HasSuffix(key, scoreSuffix) {
+				return nil
+			}
+			r := &contest.Roster{}
+			dec := gob.NewDecoder(bytes.NewReader(v))
+			err := dec.Decode(r)
+			if err != nil {
+				return err
+			}
+			if r.Private {
+				return nil
+			}
+			desc := contest.ContestDescription{
+				Key:  key,
+				Name: r.Name,
+			}
+			if r.ActiveRound < 0 {
+				list.Closed = append(list.Closed, desc)
+			} else {
+				list.Open = append(list.Open, desc)
 			}
 			return nil
 		})

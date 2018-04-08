@@ -33,14 +33,9 @@ func checkGopherJS() {
 }
 
 func depEnsure() error {
-	if !isToolInstalled("dep") {
-		err := exec.Command("bash", "-c", "curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh").Run()
-		if err != nil {
-			log.Fatalf("Error installing dep: %s", err.Error())
-			return err
-		}
+	if isToolInstalled("dep") {
+		exec.Command("dep", "ensure").Run()
 	}
-	return exec.Command("dep", "ensure").Run()
 }
 
 func Build() error {
@@ -97,6 +92,16 @@ func InstallDeps() error {
 		return err
 	}
 	return nil
+}
+
+func InstallDepTool() error {
+	if !isToolInstalled("dep") {
+		err := exec.Command("bash", "-c", "curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh").Run()
+		if err != nil {
+			log.Fatalf("Error installing dep: %s", err.Error())
+			return err
+		}
+	}
 }
 
 func Clean() {

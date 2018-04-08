@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - NewContest: Option to set contest to private. It will not show up in list
 - Added code of conduct
 - Added mage for build process
+- added etag to control caching of static ressources
 
 ### Changed
 - NewContest: Entered values are now remembered when changing bracket size

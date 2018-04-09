@@ -34,8 +34,12 @@ func checkGopherJS() {
 
 func depEnsure() error {
 	if isToolInstalled("dep") {
-		exec.Command("dep", "ensure").Run()
+		return exec.Command("dep", "ensure").Run()
+	} else {
+		log.Println("'dep' not installed. To install it run target 'InstallDepTool'. "
+			"This is only necessary if you make changes to the includes or the vendor/ dir")
 	}
+	return nil
 }
 
 func Build() error {

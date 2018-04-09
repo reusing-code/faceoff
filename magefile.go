@@ -36,7 +36,7 @@ func depEnsure() error {
 	if isToolInstalled("dep") {
 		return exec.Command("dep", "ensure").Run()
 	} else {
-		log.Println("'dep' not installed. To install it run target 'InstallDepTool'. "
+		log.Println("'dep' not installed. To install it run target 'InstallDepTool'. " +
 			"This is only necessary if you make changes to the includes or the vendor/ dir")
 	}
 	return nil
@@ -106,6 +106,7 @@ func InstallDepTool() error {
 			return err
 		}
 	}
+	return nil
 }
 
 func Clean() {

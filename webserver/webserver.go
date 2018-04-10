@@ -38,7 +38,7 @@ func CreateRouter() *mux.Router {
 	xhr.HandleFunc("/advance-round", roundAdvanceHandler)
 	xhr.HandleFunc("/commit-new-roster", newRosterHandler)
 
-	websockets.RegisterRoutes(router.PathPrefix("ws").Subrouter())
+	websockets.RegisterRoutes(router.PathPrefix("/ws").Subrouter())
 
 	router.HandleFunc("/rosterlist.json", rosterListHandler)
 	router.HandleFunc("/templates", templateHandler)

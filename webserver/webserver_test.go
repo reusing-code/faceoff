@@ -284,6 +284,8 @@ func TestAdvanceRoundHandler(t *testing.T) {
 	SetRoster("123", roster)
 	SetRoster(GetScoreKey("123"), roster)
 
+	adminKey := roster.AdminKey
+
 	r := mux.NewRouter()
 	r.HandleFunc("/xhr/{key:[0-9]+}", http.HandlerFunc(roundAdvanceHandler))
 
@@ -292,17 +294,17 @@ func TestAdvanceRoundHandler(t *testing.T) {
 
 	tt := []struct {
 		key        string
-		data       []byte
+		data       string
 		statuscode int
 	}{
-		{"123", roster.UUID, http.StatusOK},
-		{"123", []byte("foobar"), http.StatusBadRequest},
-		{"456", roster.UUID, http.StatusNotFound},
+		{"123", adminKey, http.StatusOK},
+		{"123", "foobar", http.StatusBadRequest},
+		{"456", adminKey, http.StatusNotFound},
 	}
 
 	for _, tc := range tt {
 		url := ts.URL + "/xhr/" + tc.key
-		resp, err := http.Post(url, "application/json", bytes.NewBuffer(tc.data))
+		resp, err := http.Post(url, "application/json", bytes.NewBufferString(tc.data))
 		if err != nil {
 			t.Fatal(err)
 		}

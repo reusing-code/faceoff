@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Added code of conduct
 - Added mage for build process
 - added etag to control caching of static ressources
+- added adminkey. Only users with the adminkey can close voting rounds
 
 ### Changed
 - NewContest: Entered values are now remembered when changing bracket size

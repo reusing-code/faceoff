@@ -159,7 +159,7 @@ func TestRoster(t *testing.T) {
 		t.Errorf("len(list.Open) => '%d', want '%d'", len(list.Open), 2)
 	}
 
-	err := SetRoster("", &contest.Roster{})
+	err := SetRoster("", &contest.Contest{})
 	if err == nil {
 		t.Errorf("SetRoster(\"\", &contest.Roster{}) => no error, want error")
 	}

@@ -21,6 +21,11 @@ import (
 var ts *templates.TemplateSet
 var websocket *websocketjs.WebSocket
 
+type clientContest struct {
+	*contest.Contest
+	SubmittedVoteRound int
+}
+
 func main() {
 	d := dom.GetWindow().Document()
 
@@ -41,47 +46,48 @@ func main() {
 	route("", true)
 }
 
-func saveRoster(roster *contest.Contest) {
-	b, err := json.Marshal(roster)
+func saveLocalContest(contest *clientContest) {
+	b, err := json.Marshal(contest)
 	if err != nil {
 		panic(err)
 	}
-	locstor.SetItem("currentRoster", string(b))
+	err = locstor.SetItem(getCurrentBracketKey(), string(b))
+	if err != nil {
+		panic(err)
+	}
 }
 
-func loadRoster() (*contest.Contest, error) {
-	rosterStr, err := locstor.GetItem("currentRoster")
+func getLocalContest() (*clientContest, error) {
+	key := getCurrentBracketKey()
+	rosterStr, err := locstor.GetItem(key)
 	if _, ok := err.(locstor.ItemNotFoundError); ok {
 		return nil, nil
 	}
 	if err != nil {
 		return nil, err
 	}
-	result := &contest.Contest{}
+	result := &clientContest{}
 	err = json.Unmarshal([]byte(rosterStr), result)
 	return result, err
 
 }
 
-func getActiveVoteRoster(remoteRoster *contest.Contest) *contest.Contest {
-	localRoster, err := loadRoster()
+func getActiveVoteRoster(remoteRoster *contest.Contest) *clientContest {
+	localContest, err := getLocalContest()
 	if err != nil {
-		localRoster = nil
+		localContest = nil
 	}
-
-	currentRoster := remoteRoster
-	if localRoster != nil {
-		if bytes.Compare(localRoster.UUID, remoteRoster.UUID) == 0 {
-			currentRoster = localRoster
-		} else {
-			locstor.RemoveItem("currentResultsTransmitted")
+	adminKey := ""
+	if localContest != nil {
+		if remoteRoster.ActiveRound == localContest.ActiveRound {
+			return localContest
 		}
-	} else {
-		locstor.RemoveItem("currentResultsTransmitted")
+		adminKey = localContest.AdminKey
 	}
-
-	saveRoster(currentRoster)
-	return currentRoster
+	contest := &clientContest{Contest: remoteRoster, SubmittedVoteRound: -1}
+	contest.AdminKey = adminKey
+	saveLocalContest(contest)
+	return contest
 }
 
 func getRosterFromServer() (*contest.Contest, error) {
@@ -115,12 +121,14 @@ func commitNewRoster(roster *contest.Contest) {
 	buf := &bytes.Buffer{}
 	buf.ReadFrom(r.Body)
 	r.Body.Close()
-	bracketCreatedView(roster.Name, buf.String())
+	setCurrentBracket(buf.String())
+	saveLocalContest(&clientContest{Contest: roster, SubmittedVoteRound: -1})
+	bracketCreatedView(roster.Name)
 }
 
 func createParameterizedXHRRequestURL(ressoure string) string {
-	currentKey, err := locstor.GetItem("currentBracketKey")
-	if err != nil {
+	currentKey := getCurrentBracketKey()
+	if currentKey == "" {
 		currentKey = "0"
 	}
 	return "/xhr/" + currentKey + ressoure
@@ -162,11 +170,11 @@ func getCurrentBracketKey() string {
 	return key
 }
 
-func getNextMatch(roster *contest.Contest) *contest.Match {
-	if roster.ActiveRound < 0 {
+func getNextMatch(cont *clientContest) *contest.Match {
+	if cont.ActiveRound < 0 {
 		return nil
 	}
-	r := roster.Rounds[roster.ActiveRound]
+	r := cont.Rounds[cont.ActiveRound]
 	for i, m := range r.Matches {
 		if m.Winner == contest.NONE {
 			m.Num = i
@@ -191,4 +199,28 @@ func getBracketListFromServer() (*contest.ContestList, error) {
 	list := &contest.ContestList{}
 	err = json.Unmarshal(buf.Bytes(), list)
 	return list, err
+}
+
+func submitVote() {
+	localContest, err := getLocalContest()
+
+	if err != nil {
+		return
+	}
+
+	if localContest.SubmittedVoteRound < localContest.ActiveRound {
+		b, err := json.Marshal(localContest.Contest)
+		if err != nil {
+			panic(err)
+		}
+		r, err := http.Post(createParameterizedXHRRequestURL("/submit-vote"), "application/json", bytes.NewBuffer(b))
+		if err != nil {
+			panic(err)
+		}
+		if r.StatusCode >= 200 && r.StatusCode < 300 {
+			localContest.SubmittedVoteRound = localContest.ActiveRound
+			saveLocalContest(localContest)
+		}
+	}
+
 }

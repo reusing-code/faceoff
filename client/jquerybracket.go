@@ -8,7 +8,7 @@ import (
 	"github.com/reusing-code/faceoff/shared/contest"
 )
 
-func getBracketOptions(r *contest.Roster) *js.Object {
+func getBracketOptions(r *contest.Contest) *js.Object {
 	// REALLY REALLY ugly way to do this...
 	teams := bytes.Buffer{}
 	teams.WriteString("[")

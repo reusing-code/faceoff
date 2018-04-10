@@ -10,7 +10,7 @@ import (
 )
 
 type viewFunc func()
-type viewFuncRoster func(bracket *contest.Roster)
+type viewFuncRoster func(bracket *contest.Contest)
 
 type historyEntry struct {
 	addToHistory bool

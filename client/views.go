@@ -22,7 +22,7 @@ type matchViewData struct {
 	MatchNum   int
 }
 
-func adminView(remoteRoster *contest.Roster) {
+func adminView(remoteRoster *contest.Contest) {
 	contenderCount := 0
 	if remoteRoster.ActiveRound >= 0 {
 		contenderCount = len(remoteRoster.Rounds[remoteRoster.ActiveRound].Matches) * 2
@@ -58,7 +58,7 @@ func adminView(remoteRoster *contest.Roster) {
 	})
 }
 
-func bracketView(remoteRoster *contest.Roster) {
+func bracketView(remoteRoster *contest.Contest) {
 	activeRoster := getActiveVoteRoster(remoteRoster)
 	m := getNextMatch(activeRoster)
 	data := struct {
@@ -131,7 +131,7 @@ func bracketView(remoteRoster *contest.Roster) {
 	}
 }
 
-func votingView(remoteRoster *contest.Roster) {
+func votingView(remoteRoster *contest.Contest) {
 	currentRoster := getActiveVoteRoster(remoteRoster)
 
 	m := getNextMatch(currentRoster)
@@ -148,7 +148,7 @@ func votingView(remoteRoster *contest.Roster) {
 	showMatch(currentRoster, data, m)
 }
 
-func showMatch(roster *contest.Roster, data matchViewData, m *contest.Match) {
+func showMatch(roster *contest.Contest, data matchViewData, m *contest.Match) {
 	renderTemplate("matchvote", data)
 	setActiveNavItem("vote-link")
 	d := dom.GetWindow().Document()

@@ -41,7 +41,7 @@ func main() {
 	route("", true)
 }
 
-func saveRoster(roster *contest.Roster) {
+func saveRoster(roster *contest.Contest) {
 	b, err := json.Marshal(roster)
 	if err != nil {
 		panic(err)
@@ -49,7 +49,7 @@ func saveRoster(roster *contest.Roster) {
 	locstor.SetItem("currentRoster", string(b))
 }
 
-func loadRoster() (*contest.Roster, error) {
+func loadRoster() (*contest.Contest, error) {
 	rosterStr, err := locstor.GetItem("currentRoster")
 	if _, ok := err.(locstor.ItemNotFoundError); ok {
 		return nil, nil
@@ -57,13 +57,13 @@ func loadRoster() (*contest.Roster, error) {
 	if err != nil {
 		return nil, err
 	}
-	result := &contest.Roster{}
+	result := &contest.Contest{}
 	err = json.Unmarshal([]byte(rosterStr), result)
 	return result, err
 
 }
 
-func getActiveVoteRoster(remoteRoster *contest.Roster) *contest.Roster {
+func getActiveVoteRoster(remoteRoster *contest.Contest) *contest.Contest {
 	localRoster, err := loadRoster()
 	if err != nil {
 		localRoster = nil
@@ -84,7 +84,7 @@ func getActiveVoteRoster(remoteRoster *contest.Roster) *contest.Roster {
 	return currentRoster
 }
 
-func getRosterFromServer() (*contest.Roster, error) {
+func getRosterFromServer() (*contest.Contest, error) {
 	r, err := http.Get(createParameterizedXHRRequestURL("/roster.json"))
 	if err != nil {
 		return nil, err
@@ -96,7 +96,7 @@ func getRosterFromServer() (*contest.Roster, error) {
 	return result, err
 }
 
-func commitNewRoster(roster *contest.Roster) {
+func commitNewRoster(roster *contest.Contest) {
 	marshalled, err := json.Marshal(roster)
 	if err != nil {
 		println(err)
@@ -162,7 +162,7 @@ func getCurrentBracketKey() string {
 	return key
 }
 
-func getNextMatch(roster *contest.Roster) *contest.Match {
+func getNextMatch(roster *contest.Contest) *contest.Match {
 	if roster.ActiveRound < 0 {
 		return nil
 	}

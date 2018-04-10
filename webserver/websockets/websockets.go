@@ -18,6 +18,7 @@ func ServeWs(w http.ResponseWriter, r *http.Request) {
 	key := mux.Vars(r)["key"]
 	ws, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
+		log.Println(err)
 		if _, ok := err.(websocket.HandshakeError); !ok {
 			log.Println(err)
 		}

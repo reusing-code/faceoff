@@ -62,13 +62,13 @@ func CloseDB() error {
 	return nil
 }
 
-func GetRoster(id string) (*contest.Roster, error) {
+func GetRoster(id string) (*contest.Contest, error) {
 	value, err := GetValue(id)
 	if value == nil || err != nil {
 		return nil, fmt.Errorf("No key '%s' in DB", id)
 	}
 
-	result := &contest.Roster{}
+	result := &contest.Contest{}
 	dec := gob.NewDecoder(bytes.NewReader(value))
 	err = dec.Decode(result)
 	return result, err
@@ -100,7 +100,7 @@ func SetValue(id string, value []byte) error {
 	return err
 }
 
-func SetRoster(id string, roster *contest.Roster) error {
+func SetRoster(id string, roster *contest.Contest) error {
 	if roster == nil {
 		return errors.New("SetRoster(): Roster was nil")
 	}
@@ -146,7 +146,7 @@ func GetContestList() *contest.ContestList {
 			if strings.HasSuffix(key, scoreSuffix) {
 				return nil
 			}
-			r := &contest.Roster{}
+			r := &contest.Contest{}
 			dec := gob.NewDecoder(bytes.NewReader(v))
 			err := dec.Decode(r)
 			if err != nil {

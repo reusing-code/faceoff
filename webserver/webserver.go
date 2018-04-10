@@ -162,7 +162,7 @@ func newRosterHandler(w http.ResponseWriter, r *http.Request) {
 	b.ReadFrom(r.Body)
 	r.Body.Close()
 
-	roster := &contest.Roster{}
+	roster := &contest.Contest{}
 	err := json.Unmarshal(b.Bytes(), roster)
 	if err != nil {
 		handleBadRequest(w, "Bad data in /commit-new-roster: "+err.Error())

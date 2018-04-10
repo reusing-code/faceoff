@@ -30,7 +30,7 @@ type Round struct {
 	Matches []*Match
 }
 
-type Roster struct {
+type Contest struct {
 	UUID         []byte
 	Rounds       []*Round
 	CurrentVotes int
@@ -53,14 +53,14 @@ func init() {
 	rand.Seed(time.Now().UTC().UnixNano())
 }
 
-func CreateRoster(name string, participants []string, private bool) (*Roster, error) {
+func CreateRoster(name string, participants []string, private bool) (*Contest, error) {
 	l := len(participants)
 	// very ugly, but good enough for now
 	if l != 2 && l != 4 && l != 8 && l != 16 && l != 32 {
 		return nil, errors.New("Unsupported participant number")
 	}
 
-	res := &Roster{Rounds: make([]*Round, 0), Name: name}
+	res := &Contest{Rounds: make([]*Round, 0), Name: name}
 	round := &Round{}
 
 	round.Matches = generateMatches(participants)
@@ -97,8 +97,8 @@ func (m *Match) checkWinner() {
 	}
 }
 
-func (r *Roster) DeepCopy() *Roster {
-	copy := &Roster{
+func (r *Contest) DeepCopy() *Contest {
+	copy := &Contest{
 		UUID:         r.UUID,
 		Rounds:       make([]*Round, 0),
 		CurrentVotes: r.CurrentVotes,
@@ -119,7 +119,7 @@ func (r *Roster) DeepCopy() *Roster {
 	return copy
 }
 
-func (r *Roster) AdvanceRound() {
+func (r *Contest) AdvanceRound() {
 	if r.ActiveRound < 0 {
 		return
 	}
@@ -179,18 +179,18 @@ func checkWinner(m *Match) {
 	}
 }
 
-func ParseRoster(r io.ReadCloser) (*Roster, error) {
+func ParseRoster(r io.ReadCloser) (*Contest, error) {
 	b, err := ioutil.ReadAll(r)
 	if err != nil {
 		return nil, err
 	}
 	r.Close()
-	result := &Roster{}
+	result := &Contest{}
 	err = json.Unmarshal(b, result)
 	return result, err
 }
 
-func (r *Roster) AddVotes(vote *Roster) {
+func (r *Contest) AddVotes(vote *Contest) {
 	currentRound := r.Rounds[len(r.Rounds)-1]
 	voteRound := vote.Rounds[len(r.Rounds)-1]
 

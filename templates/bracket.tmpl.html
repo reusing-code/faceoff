@@ -1,12 +1,5 @@
 {{define "content"}}
 <h1>{{ .Name }}</h1>
-<div id="bracket">
-</div>
-<div id="stats">
-    <p>
-        {{ if not .BracketClosed }} Bisher abgegebene Stimmen: {{ .CurrentVotes }} {{ end }}
-    </p>
-</div>
 <div class="form-group">
     {{ if .VoteActive }}
     <button id="btn-vote" class="btn btn btn-secondary btn-lg btn-block my-3">Zur Abstimmung</button>
@@ -17,6 +10,13 @@
     {{ end }}
     <button id="btn-bracket" class="btn btn btn-secondary btn-lg btn-block my-3">
         <i class="fas fa-sync"></i> Aktualisieren</button>
+</div>
+<div id="bracket">
+</div>
+<div id="stats">
+    <p>
+        {{ if not .BracketClosed }} Bisher abgegebene Stimmen: {{ .CurrentVotes }} {{ end }}
+    </p>
 </div>
 {{ if .CloseRoundActive }}
 <div class="form-group">

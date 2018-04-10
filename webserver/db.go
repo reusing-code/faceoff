@@ -74,6 +74,14 @@ func GetRoster(id string) (*contest.Contest, error) {
 	return result, err
 }
 
+func GetPublicRoster(id string) (*contest.Contest, error) {
+	result, err := GetRoster(id)
+	if err == nil && result != nil {
+		result.RemovePrivateData()
+	}
+	return result, err
+}
+
 func GetValue(id string) ([]byte, error) {
 	key := []byte(id)
 	var value []byte

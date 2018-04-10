@@ -6,9 +6,8 @@ import (
 	"io"
 	"io/ioutil"
 	"math/rand"
+	"strconv"
 	"time"
-
-	"github.com/google/uuid"
 )
 
 type Contender int
@@ -31,12 +30,12 @@ type Round struct {
 }
 
 type Contest struct {
-	UUID         []byte
+	Name         string
 	Rounds       []*Round
 	CurrentVotes int
 	ActiveRound  int
-	Name         string
 	Private      bool
+	AdminKey     string
 }
 
 type ContestDescription struct {
@@ -65,8 +64,7 @@ func CreateRoster(name string, participants []string, private bool) (*Contest, e
 
 	round.Matches = generateMatches(participants)
 	res.Rounds = append(res.Rounds, round)
-	id, _ := uuid.New().MarshalBinary()
-	res.UUID = id
+	res.AdminKey = createAdminKey()
 	res.Private = private
 	return res, nil
 
@@ -99,7 +97,7 @@ func (m *Match) checkWinner() {
 
 func (r *Contest) DeepCopy() *Contest {
 	copy := &Contest{
-		UUID:         r.UUID,
+		AdminKey:     r.AdminKey,
 		Rounds:       make([]*Round, 0),
 		CurrentVotes: r.CurrentVotes,
 		ActiveRound:  r.ActiveRound,
@@ -144,8 +142,6 @@ func (r *Contest) AdvanceRound() {
 		r.ActiveRound = -1
 	}
 
-	id, _ := uuid.New().MarshalBinary()
-	r.UUID = id
 	r.CurrentVotes = 0
 }
 
@@ -200,4 +196,30 @@ func (r *Contest) AddVotes(vote *Contest) {
 			match.Score[voteMatch.Winner]++
 		}
 	}
+}
+
+func (r *Contest) RemovePrivateData() {
+	r.AdminKey = ""
+
+	if r.ActiveRound >= 0 {
+		currentRound := r.Rounds[r.ActiveRound]
+
+		for i, voteMatch := range currentRound.Matches {
+			match := currentRound.Matches[i]
+			voteMatch.Winner = NONE
+			match.Score = [2]int{0, 0}
+		}
+	}
+}
+
+var minKey = 10000000
+var maxKey = 100000000
+
+func createAdminKey() string {
+	var rnd int
+	for rnd < minKey {
+		rnd = rand.Intn(maxKey)
+	}
+	id := strconv.Itoa(rnd)
+	return "A" + id
 }

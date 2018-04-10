@@ -56,9 +56,6 @@ func route(path string, addToHistory bool) {
 	} else if path == "/list" {
 		go routeWithOutBracket(listBracketView, hist)
 		return
-	} else if path == "/admin" {
-		go routeWithBracket(adminView, hist)
-		return
 	} else if path == "/vote" {
 		go routeWithBracket(votingView, hist)
 		return

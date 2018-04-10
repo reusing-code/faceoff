@@ -8,7 +8,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/go-humble/locstor"
 	"github.com/gopherjs/gopherjs/js"
 	"github.com/gopherjs/websocket/websocketjs"
 	"github.com/reusing-code/faceoff/shared/contest"
@@ -22,44 +21,11 @@ type matchViewData struct {
 	MatchNum   int
 }
 
-func adminView(remoteRoster *contest.Contest) {
-	contenderCount := 0
-	if remoteRoster.ActiveRound >= 0 {
-		contenderCount = len(remoteRoster.Rounds[remoteRoster.ActiveRound].Matches) * 2
-	}
-
-	data := struct {
-		Round          int
-		ContenderCount int
-	}{
-		remoteRoster.ActiveRound + 1,
-		contenderCount,
-	}
-
-	renderTemplate("admin", data)
-
-	setActiveNavItem("admin-link")
-
-	d := dom.GetWindow().Document()
-
-	if remoteRoster.ActiveRound >= 0 {
-		btnA := d.GetElementByID("btn-advance-round").(*dom.HTMLButtonElement)
-		btnA.AddEventListener("click", false, func(event dom.Event) {
-			go func() {
-				http.Post(createParameterizedXHRRequestURL("/advance-round"), "POST", bytes.NewReader(remoteRoster.UUID))
-				route("/bracket", true)
-			}()
-		})
-	}
-
-	btnNew := d.GetElementByID("btn-new-tournament").(*dom.HTMLButtonElement)
-	btnNew.AddEventListener("click", false, func(event dom.Event) {
-		route("/new", true)
-	})
-}
-
 func bracketView(remoteRoster *contest.Contest) {
 	activeRoster := getActiveVoteRoster(remoteRoster)
+
+	isAdmin := activeRoster.AdminKey != ""
+
 	m := getNextMatch(activeRoster)
 	data := struct {
 		Name             string
@@ -67,12 +33,14 @@ func bracketView(remoteRoster *contest.Contest) {
 		VoteActive       bool
 		BracketClosed    bool
 		CurrentVotes     int
+		IsAdmin          bool
 	}{
 		Name:             activeRoster.Name,
-		CloseRoundActive: m == nil && remoteRoster.ActiveRound >= 0,
+		CloseRoundActive: m == nil && remoteRoster.ActiveRound >= 0 && isAdmin,
 		VoteActive:       m != nil,
 		BracketClosed:    remoteRoster.ActiveRound < 0,
 		CurrentVotes:     remoteRoster.CurrentVotes,
+		IsAdmin:          isAdmin,
 	}
 	renderTemplate("bracket", data)
 	setActiveNavItem("bracket-link")
@@ -94,9 +62,10 @@ func bracketView(remoteRoster *contest.Contest) {
 				return
 			}
 			go func() {
-				http.Post(createParameterizedXHRRequestURL("/advance-round"), "POST", bytes.NewReader(remoteRoster.UUID))
+				http.Post(createParameterizedXHRRequestURL("/advance-round"), "POST", strings.NewReader(activeRoster.AdminKey))
 				route("/bracket", false)
 			}()
+			btnClose.(*dom.HTMLButtonElement).Disabled = true
 		})
 	}
 
@@ -148,20 +117,20 @@ func votingView(remoteRoster *contest.Contest) {
 	showMatch(currentRoster, data, m)
 }
 
-func showMatch(roster *contest.Contest, data matchViewData, m *contest.Match) {
+func showMatch(cont *clientContest, data matchViewData, m *contest.Match) {
 	renderTemplate("matchvote", data)
 	setActiveNavItem("vote-link")
 	d := dom.GetWindow().Document()
 	btnA := d.GetElementByID("btn-contenderA").(*dom.HTMLButtonElement)
 	btnA.AddEventListener("click", false, func(event dom.Event) {
 		m.WinA()
-		saveRoster(roster)
+		saveLocalContest(cont)
 		route("/vote", false)
 	})
 	btnB := d.GetElementByID("btn-contenderB").(*dom.HTMLButtonElement)
 	btnB.AddEventListener("click", false, func(event dom.Event) {
 		m.WinB()
-		saveRoster(roster)
+		saveLocalContest(cont)
 		route("/vote", false)
 	})
 }
@@ -170,22 +139,7 @@ func showVotingFinished() {
 	renderTemplate("finishedvote", nil)
 	setActiveNavItem("vote-link")
 
-	_, err := locstor.GetItem("currentResultsTransmitted")
-	if err != nil {
-		if _, ok := err.(locstor.ItemNotFoundError); ok {
-			roster, err := locstor.GetItem("currentRoster")
-			if err != nil {
-				panic(err)
-			}
-			r, err := http.Post(createParameterizedXHRRequestURL("/submit-vote"), "application/json", strings.NewReader(roster))
-			if err != nil {
-				panic(err)
-			}
-			if r.StatusCode >= 200 && r.StatusCode < 300 {
-				locstor.SetItem("currentResultsTransmitted", "TRUE")
-			}
-		}
-	}
+	submitVote()
 
 	btnA := dom.GetWindow().Document().GetElementByID("btn-bracket")
 	btnA.AddEventListener("click", false, func(event dom.Event) {
@@ -279,18 +233,19 @@ func showContestantInputs(count int) {
 	})
 }
 
-func bracketCreatedView(name string, newID string) {
-	setCurrentBracket(newID)
-
+func bracketCreatedView(newID string) {
+	cont, _ := getLocalContest()
 	url := dom.GetWindow().Location().Origin + "/" + newID
 	data := struct {
-		Name string
-		ID   string
-		URL  string
+		Name     string
+		ID       string
+		URL      string
+		AdminKey string
 	}{
-		Name: name,
-		ID:   newID,
-		URL:  url,
+		Name:     cont.Name,
+		ID:       newID,
+		URL:      url,
+		AdminKey: cont.AdminKey,
 	}
 	renderTemplate("bracketcreated", data)
 	d := dom.GetWindow().Document()

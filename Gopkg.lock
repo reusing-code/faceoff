@@ -14,12 +14,6 @@
   version = "v0.2.2"
 
 [[projects]]
-  name = "github.com/google/uuid"
-  packages = ["."]
-  revision = "064e2069ce9c359c118179501254f67d7d37ba24"
-  version = "0.2"
-
-[[projects]]
   branch = "master"
   name = "github.com/gopherjs/websocket"
   packages = ["websocketjs"]
@@ -73,6 +67,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "6591df2c14ad5534e8195cedfd4b0a9ff418649438683b47bd250b9ab32e031b"
+  inputs-digest = "f73087d4c0f685da4a67782307d048cf8cc5ac7981bf82abcc06ccf5a0d810e5"
   solver-name = "gps-cdcl"
   solver-version = 1

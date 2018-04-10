@@ -71,7 +71,7 @@ func templateHandler(w http.ResponseWriter, r *http.Request) {
 
 func rosterHandler(w http.ResponseWriter, r *http.Request) {
 	key := mux.Vars(r)["key"]
-	roster, err := GetRoster(key)
+	roster, err := GetPublicRoster(key)
 	if err != nil {
 		handleNotFound(w, r)
 		return
@@ -121,7 +121,7 @@ func voteHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if bytes.Compare(voteRoster.UUID, scoreRoster.UUID) == 0 {
+	if voteRoster.ActiveRound == scoreRoster.ActiveRound {
 		scoreRoster.AddVotes(voteRoster)
 		roster.CurrentVotes++
 		SetRoster(GetScoreKey(key), scoreRoster)
@@ -135,20 +135,20 @@ func roundAdvanceHandler(w http.ResponseWriter, r *http.Request) {
 
 	b := &bytes.Buffer{}
 	b.ReadFrom(r.Body)
-	id := b.Bytes()
+	adminKey := b.String()
 	r.Body.Close()
 	scoreRoster, err := GetRoster(GetScoreKey(key))
 	if err != nil {
 		handleNotFound(w, r)
 		return
 	}
-	if bytes.Compare(id, scoreRoster.UUID) == 0 {
+	if adminKey == scoreRoster.AdminKey {
 		scoreRoster.AdvanceRound()
 		SetRoster(key, scoreRoster)
 		SetRoster(GetScoreKey(key), scoreRoster)
 		websockets.TriggerUpdate(key)
 	} else {
-		handleBadRequest(w, fmt.Sprintf("roundAdvanceHandler: Invalid UUID %q", string(id)))
+		handleBadRequest(w, fmt.Sprintf("roundAdvanceHandler: Invalid AdminKey %q", adminKey))
 		return
 	}
 }

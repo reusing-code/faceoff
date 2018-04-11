@@ -5,12 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
+
+	"github.com/go-humble/locstor"
 
 	"github.com/gopherjs/websocket/websocketjs"
 
 	"github.com/gopherjs/gopherjs/js"
-
-	"github.com/go-humble/locstor"
 
 	"github.com/reusing-code/faceoff/shared/contest"
 	"github.com/reusing-code/faceoff/shared/templates"
@@ -57,8 +58,12 @@ func saveLocalContest(contest *clientContest) {
 	}
 }
 
-func getLocalContest() (*clientContest, error) {
+func getCurrentLocalContest() (*clientContest, error) {
 	key := getCurrentBracketKey()
+	return getLocalContest(key)
+}
+
+func getLocalContest(key string) (*clientContest, error) {
 	rosterStr, err := locstor.GetItem(key)
 	if _, ok := err.(locstor.ItemNotFoundError); ok {
 		return nil, nil
@@ -69,11 +74,10 @@ func getLocalContest() (*clientContest, error) {
 	result := &clientContest{}
 	err = json.Unmarshal([]byte(rosterStr), result)
 	return result, err
-
 }
 
 func getActiveVoteRoster(remoteRoster *contest.Contest) *clientContest {
-	localContest, err := getLocalContest()
+	localContest, err := getCurrentLocalContest()
 	if err != nil {
 		localContest = nil
 	}
@@ -202,7 +206,7 @@ func getBracketListFromServer() (*contest.ContestList, error) {
 }
 
 func submitVote() {
-	localContest, err := getLocalContest()
+	localContest, err := getCurrentLocalContest()
 
 	if err != nil {
 		return
@@ -223,4 +227,41 @@ func submitVote() {
 		}
 	}
 
+}
+
+func addParticipatingContests(list *contest.ContestList) {
+	processedContests := make(map[string]contest.ContestDescription)
+
+	localContests := getAllLocalContests()
+	list.Participating = localContests
+	for _, loc := range localContests {
+		processedContests[loc.Key] = loc
+	}
+
+	for i, open := range list.Open {
+		if _, ok := processedContests[open.Key]; ok {
+			list.Open = append(list.Open[:i], list.Open[i+1:]...)
+		}
+	}
+}
+
+func getAllLocalContests() []contest.ContestDescription {
+	result := make([]contest.ContestDescription, 0)
+	len, _ := locstor.Length()
+	for i := 0; i < len; i++ {
+		key, _ := locstor.Key(strconv.Itoa(i))
+		_, err := strconv.Atoi(key)
+		if err != nil {
+			continue
+		}
+		con, err := getLocalContest(key)
+		if err != nil {
+			continue
+		}
+		if con.ActiveRound < 0 {
+			continue
+		}
+		result = append(result, contest.ContestDescription{Key: key, Name: con.Name, IsAdmin: con.AdminKey != ""})
+	}
+	return result
 }

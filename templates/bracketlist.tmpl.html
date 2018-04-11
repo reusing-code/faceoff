@@ -1,9 +1,16 @@
 {{define "listitem"}}
-<a href="/{{ .Key }}" id="{{ .Key }}" class="bracket-list-item list-group-item list-group-item-action">{{ .Name }}</a>
+<a href="/{{ .Key }}" id="{{ .Key }}" class="bracket-list-item list-group-item list-group-item-action">{{ .Name }}
+    {{ if .IsAdmin }}<span class="badge badge-danger h4">Admin</span>{{ end }}</a>
 {{end}} 
 
 {{define "content"}}
 <h1>Liste aller Abstimmungen</h1>
+<h2>Teilgenommen:</h2>
+<div class="list-group">
+    {{range .Participating}} 
+        {{template "listitem" .}} 
+    {{end}}
+</div>
 <h2>Offen:</h2>
 <div class="list-group">
     {{range .Open}} 

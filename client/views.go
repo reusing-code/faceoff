@@ -234,7 +234,7 @@ func showContestantInputs(count int) {
 }
 
 func bracketCreatedView(newID string) {
-	cont, _ := getLocalContest()
+	cont, _ := getCurrentLocalContest()
 	url := dom.GetWindow().Location().Origin + "/" + newID
 	data := struct {
 		Name     string
@@ -293,6 +293,9 @@ func listBracketView() {
 		println(err)
 		return
 	}
+
+	addParticipatingContests(data)
+
 	renderTemplate("bracketlist", data)
 	setActiveNavItem("list-link")
 

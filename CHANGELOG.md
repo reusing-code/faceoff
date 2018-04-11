@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 - NewContest: Entered values are now remembered when changing bracket size
+- ContestList: Added category for contest where user has participated. + admin badge
 
 ## [0.4.0] - 2018-03-28
 ### Added

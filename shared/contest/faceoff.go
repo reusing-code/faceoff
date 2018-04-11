@@ -39,13 +39,15 @@ type Contest struct {
 }
 
 type ContestDescription struct {
-	Key  string
-	Name string
+	Key     string
+	Name    string
+	IsAdmin bool
 }
 
 type ContestList struct {
-	Open   []ContestDescription
-	Closed []ContestDescription
+	Open          []ContestDescription
+	Closed        []ContestDescription
+	Participating []ContestDescription
 }
 
 func init() {

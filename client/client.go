@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"sort"
 	"strconv"
 
 	"github.com/go-humble/locstor"
@@ -246,6 +247,10 @@ func addParticipatingContests(list *contest.ContestList) {
 		}
 	}
 	list.Open = tmpOpen
+
+	sort.Slice(list.Participating, func(i, j int) bool {
+		return list.Participating[i].TimeStamp > list.Participating[j].TimeStamp
+	})
 }
 
 func getAllLocalContests() []contest.ContestDescription {
@@ -264,7 +269,8 @@ func getAllLocalContests() []contest.ContestDescription {
 		if con.ActiveRound < 0 {
 			continue
 		}
-		result = append(result, contest.ContestDescription{Key: key, Name: con.Name, IsAdmin: con.AdminKey != ""})
+		result = append(result, contest.ContestDescription{Key: key, Name: con.Name,
+			IsAdmin: con.AdminKey != "", TimeStamp: con.CreatedTimeStamp})
 	}
 	return result
 }

@@ -30,18 +30,20 @@ type Round struct {
 }
 
 type Contest struct {
-	Name         string
-	Rounds       []*Round
-	CurrentVotes int
-	ActiveRound  int
-	Private      bool
-	AdminKey     string
+	Name             string
+	Rounds           []*Round
+	CurrentVotes     int
+	ActiveRound      int
+	Private          bool
+	AdminKey         string
+	CreatedTimeStamp int64
 }
 
 type ContestDescription struct {
-	Key     string
-	Name    string
-	IsAdmin bool
+	Key       string
+	Name      string
+	IsAdmin   bool
+	TimeStamp int64
 }
 
 type ContestList struct {
@@ -68,6 +70,7 @@ func CreateRoster(name string, participants []string, private bool) (*Contest, e
 	res.Rounds = append(res.Rounds, round)
 	res.AdminKey = createAdminKey()
 	res.Private = private
+	res.CreatedTimeStamp = time.Now().Unix()
 	return res, nil
 
 }
@@ -99,10 +102,11 @@ func (m *Match) checkWinner() {
 
 func (r *Contest) DeepCopy() *Contest {
 	copy := &Contest{
-		AdminKey:     r.AdminKey,
-		Rounds:       make([]*Round, 0),
-		CurrentVotes: r.CurrentVotes,
-		ActiveRound:  r.ActiveRound,
+		AdminKey:         r.AdminKey,
+		Rounds:           make([]*Round, 0),
+		CurrentVotes:     r.CurrentVotes,
+		ActiveRound:      r.ActiveRound,
+		CreatedTimeStamp: r.CreatedTimeStamp,
 	}
 	for _, orgRound := range r.Rounds {
 		copyRound := &Round{Matches: make([]*Match, 0)}

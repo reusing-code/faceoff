@@ -1,29 +1,31 @@
 {{define "contestant-input"}}
-<div class="form-group">
-  <input type="text" class="form-control" required id="name-input" placeholder="Name des Wettbewerbs">
-</div>
-{{ range $num := .Nums }}
-<div class="form-group">
-  <input type="text" class="form-control contestant-input" required id="contestant-input-{{ $num }}" placeholder="Wettbewerber {{ $num }}">
-</div>
-{{end}}
-<div class="form-check">
-  <input class="form-check-input" type="checkbox" value="" id="randomize-input">
-  <label class="form-check-label" for="randomize-input">
-    Reihenfolge randomisieren
-  </label>
-</div>
-<div class="form-check">
-  <input class="form-check-input" type="radio" name="visibility-Radios" id="radio-public" value="public" checked>
-  <label class="form-check-label" for="radio-public">
-    Öffentlich (über Liste aufrufbar)
-  </label>
-</div>
-<div class="form-check">
-  <input class="form-check-input" type="radio" name="visibility-Radios" id="radio-private" value="private">
-  <label class="form-check-label" for="radio-private">
-    Privat (Nur über Abstimmungscode oder Link aufrufbar)
-  </label>
-</div>
-<button type="submit" class="btn btn-primary">Erstellen</button>
+<form id="form-contestant-names" class="my-3">
+  <div class="form-group">
+    <input type="text" class="form-control" required id="name-input" placeholder="Name des Wettbewerbs">
+  </div>
+  {{ range $num := .Nums }}
+  <div class="form-group">
+    <input type="text" class="form-control contestant-input" required id="contestant-input-{{ $num }}" placeholder="Wettbewerber {{ $num }}">
+  </div>
+  {{end}}
+  <div class="form-check">
+    <input class="form-check-input" type="checkbox" value="" id="randomize-input">
+    <label class="form-check-label" for="randomize-input">
+      Reihenfolge randomisieren
+    </label>
+  </div>
+  <div class="form-check">
+    <input class="form-check-input" type="radio" name="visibility-Radios" id="radio-public" value="public" checked>
+    <label class="form-check-label" for="radio-public">
+      Öffentlich (über Liste aufrufbar)
+    </label>
+  </div>
+  <div class="form-check">
+    <input class="form-check-input" type="radio" name="visibility-Radios" id="radio-private" value="private">
+    <label class="form-check-label" for="radio-private">
+      Privat (Nur über Abstimmungscode oder Link aufrufbar)
+    </label>
+  </div>
+  <button type="submit" class="btn btn-primary">Erstellen</button>
+</form>
 {{end}}

@@ -238,11 +238,14 @@ func addParticipatingContests(list *contest.ContestList) {
 		processedContests[loc.Key] = loc
 	}
 
-	for i, open := range list.Open {
-		if _, ok := processedContests[open.Key]; ok {
-			list.Open = append(list.Open[:i], list.Open[i+1:]...)
+	tmpOpen := list.Open[:0]
+	for _, open := range list.Open {
+		if _, ok := processedContests[open.Key]; !ok {
+			// bracket not in local list
+			tmpOpen = append(tmpOpen, open)
 		}
 	}
+	list.Open = tmpOpen
 }
 
 func getAllLocalContests() []contest.ContestDescription {

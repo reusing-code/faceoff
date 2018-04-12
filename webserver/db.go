@@ -8,6 +8,7 @@ import (
 	"math/rand"
 	"os"
 	pathpkg "path"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -164,8 +165,9 @@ func GetContestList() *contest.ContestList {
 				return nil
 			}
 			desc := contest.ContestDescription{
-				Key:  key,
-				Name: r.Name,
+				Key:       key,
+				Name:      r.Name,
+				TimeStamp: r.CreatedTimeStamp,
 			}
 			if r.ActiveRound < 0 {
 				list.Closed = append(list.Closed, desc)
@@ -175,6 +177,13 @@ func GetContestList() *contest.ContestList {
 			return nil
 		})
 		return nil
+	})
+
+	sort.Slice(list.Open, func(i, j int) bool {
+		return list.Open[i].TimeStamp > list.Open[j].TimeStamp
+	})
+	sort.Slice(list.Closed, func(i, j int) bool {
+		return list.Closed[i].TimeStamp > list.Closed[j].TimeStamp
 	})
 	return list
 }

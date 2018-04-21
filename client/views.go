@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/gopherjs/gopherjs/js"
-	"github.com/gopherjs/websocket/websocketjs"
 	"github.com/reusing-code/faceoff/shared/contest"
 	"honnef.co/go/js/dom"
 )
@@ -73,29 +72,6 @@ func bracketView(remoteRoster *contest.Contest) {
 	if btnRefresh != nil {
 		btnRefresh.AddEventListener("click", false, func(event dom.Event) {
 			route("/bracket", false)
-		})
-	}
-
-	var err error
-	if websocket == nil {
-		websocket, err = websocketjs.New(getWebsocketURL())
-		if err != nil {
-			println(err)
-			return
-		}
-		websocket.AddEventListener("message", false, func(ev *js.Object) {
-			data := ev.Get("data").Interface().(string)
-			if data == "refresh" {
-				if dom.GetWindow().Location().Pathname == "/bracket" {
-					route("/bracket", false)
-				}
-			}
-		})
-		websocket.AddEventListener("close", false, func(ev *js.Object) {
-			println("Websocket closed")
-		})
-		websocket.AddEventListener("error", false, func(ev *js.Object) {
-			println("Websocket error")
 		})
 	}
 }
@@ -315,6 +291,7 @@ func renderTemplate(templateName string, data interface{}) {
 	t := template.New("base")
 	t = template.Must(t.Parse(ts.Templates["layout/base"]))
 	t = template.Must(t.Parse(ts.Templates["layout/footer"]))
+	t = template.Must(t.Parse(ts.Templates["layout/fixedposition"]))
 	t = template.Must(t.Parse(ts.Templates[templateName]))
 
 	buf := &bytes.Buffer{}
@@ -324,6 +301,8 @@ func renderTemplate(templateName string, data interface{}) {
 	}
 	d := dom.GetWindow().Document()
 	d.GetElementByID("app").SetInnerHTML(buf.String())
+
+	d.GetElementByID("ws-state-content").SetInnerHTML(renderWSState())
 
 	brand := d.GetElementByID("navbar-brand").(*dom.HTMLAnchorElement)
 	brand.AddEventListener("click", false, func(event dom.Event) {
@@ -361,4 +340,28 @@ func renderTemplate(templateName string, data interface{}) {
 		route("/impressum", true)
 	})
 
+}
+
+func renderWSState() string {
+	t := template.New("wsstate")
+	templ := "inactive"
+	switch websocketSate {
+	case Active:
+		templ = "active"
+	case Offline:
+		templ = "offline"
+	case Error:
+		templ = "error"
+	default:
+		templ = "inactive"
+	}
+	t = template.Must(t.Parse(ts.Templates["snippets/ws-state/"+templ]))
+
+	buf := &bytes.Buffer{}
+	err := t.Execute(buf, nil)
+	if err != nil {
+		println(err.Error())
+	}
+
+	return buf.String()
 }

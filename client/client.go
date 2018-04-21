@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/go-humble/locstor"
 
@@ -22,11 +23,21 @@ import (
 
 var ts *templates.TemplateSet
 var websocket *websocketjs.WebSocket
+var websocketSate SocketState = Inactive
 
 type clientContest struct {
 	*contest.Contest
 	SubmittedVoteRound int
 }
+
+type SocketState int
+
+const (
+	Inactive SocketState = iota
+	Active
+	Error
+	Offline
+)
 
 func main() {
 	d := dom.GetWindow().Document()
@@ -44,6 +55,18 @@ func main() {
 	js.Global.Call("addEventListener", "popstate", func(event *js.Object) {
 		route("", false)
 	})
+
+	dom.GetWindow().AddEventListener("offline", false, func(ev dom.Event) {
+		if websocket != nil {
+			websocket.Close()
+			websocket = nil
+		}
+		websocketSate = Offline
+	})
+
+	if getCurrentBracketKey() != "" {
+		createWebsocket()
+	}
 
 	route("", true)
 }
@@ -140,7 +163,7 @@ func createParameterizedXHRRequestURL(ressoure string) string {
 }
 
 func getWebsocketURL() string {
-	key, _ := locstor.GetItem("currentBracketKey")
+	key := getCurrentBracketKey()
 	buf := bytes.Buffer{}
 	if dom.GetWindow().Location().Protocol == "https:" {
 		buf.WriteString("wss://")
@@ -156,15 +179,17 @@ func getWebsocketURL() string {
 }
 
 func setCurrentBracket(key string) {
+	oldKey := getCurrentBracketKey()
+	if oldKey == key {
+		//nothing to do
+		return
+	}
 	if key == "" {
 		locstor.RemoveItem("currentBracketKey")
 	} else {
 		locstor.SetItem("currentBracketKey", key)
 	}
-	if websocket != nil {
-		websocket.Close()
-		websocket = nil
-	}
+	createWebsocket()
 }
 
 func getCurrentBracketKey() string {
@@ -273,4 +298,34 @@ func getAllLocalContests() []contest.ContestDescription {
 			IsAdmin: con.AdminKey != "", TimeStamp: con.CreatedTimeStamp})
 	}
 	return result
+}
+
+func createWebsocket() {
+	if websocket != nil {
+		websocket.Close()
+		websocket = nil
+	}
+	var err error
+	websocket, err = websocketjs.New(getWebsocketURL())
+	if err != nil {
+		println(err)
+		return
+	}
+	websocketSate = Active
+	websocket.AddEventListener("message", false, func(ev *js.Object) {
+		data := ev.Get("data").Interface().(string)
+		if data == "refresh" {
+			if strings.Contains(dom.GetWindow().Location().Pathname, "/bracket") {
+				route("/bracket", false)
+			}
+		}
+	})
+	websocket.AddEventListener("close", false, func(ev *js.Object) {
+		println("Websocket closed")
+		websocketSate = Inactive
+	})
+	websocket.AddEventListener("error", false, func(ev *js.Object) {
+		println("Websocket error")
+		websocketSate = Error
+	})
 }

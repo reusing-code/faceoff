@@ -302,7 +302,7 @@ func renderTemplate(templateName string, data interface{}) {
 	d := dom.GetWindow().Document()
 	d.GetElementByID("app").SetInnerHTML(buf.String())
 
-	d.GetElementByID("ws-state-content").SetInnerHTML(renderWSState())
+	renderWebsocketState()
 
 	brand := d.GetElementByID("navbar-brand").(*dom.HTMLAnchorElement)
 	brand.AddEventListener("click", false, func(event dom.Event) {
@@ -342,7 +342,7 @@ func renderTemplate(templateName string, data interface{}) {
 
 }
 
-func renderWSState() string {
+func renderWebsocketState() {
 	t := template.New("wsstate")
 	templ := "inactive"
 	switch websocketSate {
@@ -363,5 +363,5 @@ func renderWSState() string {
 		println(err.Error())
 	}
 
-	return buf.String()
+	dom.GetWindow().Document().GetElementByID("ws-state-content").SetInnerHTML(buf.String())
 }

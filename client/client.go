@@ -62,6 +62,7 @@ func main() {
 			websocket = nil
 		}
 		websocketSate = Offline
+		renderWebsocketState()
 	})
 
 	if getCurrentBracketKey() != "" {
@@ -323,9 +324,11 @@ func createWebsocket() {
 	websocket.AddEventListener("close", false, func(ev *js.Object) {
 		println("Websocket closed")
 		websocketSate = Inactive
+		renderWebsocketState()
 	})
 	websocket.AddEventListener("error", false, func(ev *js.Object) {
 		println("Websocket error")
 		websocketSate = Error
+		renderWebsocketState()
 	})
 }

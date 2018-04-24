@@ -190,7 +190,7 @@ func setCurrentBracket(key string) {
 	} else {
 		locstor.SetItem("currentBracketKey", key)
 	}
-	createWebsocket()
+	closeWebsocket()
 }
 
 func getCurrentBracketKey() string {
@@ -302,9 +302,11 @@ func getAllLocalContests() []contest.ContestDescription {
 }
 
 func createWebsocket() {
-	if websocket != nil {
-		websocket.Close()
-		websocket = nil
+	if websocket != nil && websocketSate == Active {
+		return
+	}
+	if getCurrentBracketKey() == "" {
+		return
 	}
 	var err error
 	websocket, err = websocketjs.New(getWebsocketURL())
@@ -324,11 +326,21 @@ func createWebsocket() {
 	websocket.AddEventListener("close", false, func(ev *js.Object) {
 		println("Websocket closed")
 		websocketSate = Inactive
+		websocket = nil
 		renderWebsocketState()
 	})
 	websocket.AddEventListener("error", false, func(ev *js.Object) {
 		println("Websocket error")
 		websocketSate = Error
+		websocket = nil
 		renderWebsocketState()
 	})
+}
+
+func closeWebsocket() {
+	if websocket != nil {
+		websocket.Close()
+		websocket = nil
+	}
+	websocketSate = Inactive
 }

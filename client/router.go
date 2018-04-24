@@ -44,6 +44,8 @@ func route(path string, addToHistory bool) {
 		path:         path,
 	}
 
+	createWebsocket()
+
 	if path == "/welcome" {
 		go routeWithOutBracket(welcomeView, hist)
 		return

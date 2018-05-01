@@ -152,7 +152,7 @@ func commitNewRoster(roster *contest.Contest) {
 	r.Body.Close()
 	setCurrentBracket(buf.String())
 	saveLocalContest(&clientContest{Contest: roster, SubmittedVoteRound: -1})
-	bracketCreatedView(roster.Name)
+	bracketCreatedView()
 }
 
 func createParameterizedXHRRequestURL(ressoure string) string {

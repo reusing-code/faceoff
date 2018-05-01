@@ -209,9 +209,10 @@ func showContestantInputs(count int) {
 	})
 }
 
-func bracketCreatedView(newID string) {
+func bracketCreatedView() {
 	cont, _ := getCurrentLocalContest()
-	url := dom.GetWindow().Location().Origin + "/" + newID
+	id := getCurrentBracketKey()
+	url := dom.GetWindow().Location().Origin + "/" + id
 	data := struct {
 		Name     string
 		ID       string
@@ -219,7 +220,7 @@ func bracketCreatedView(newID string) {
 		AdminKey string
 	}{
 		Name:     cont.Name,
-		ID:       newID,
+		ID:       id,
 		URL:      url,
 		AdminKey: cont.AdminKey,
 	}

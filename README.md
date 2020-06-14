@@ -3,9 +3,7 @@
 [![Build Status](https://travis-ci.org/reusing-code/faceoff.svg?branch=master)](https://travis-ci.org/reusing-code/faceoff)
 [![Go Report Card](https://goreportcard.com/badge/github.com/reusing-code/faceoff)](https://goreportcard.com/report/github.com/reusing-code/faceoff)
 
-faceoff is a small web app to decide *what is better* through an elemination tournament in one-against-one decision votings.
-
-A live demo can be seen at [whatisbetter.de](https://whatisbetter.de) (currently only in german, sorry)
+faceoff is a small web app to decide *what is better* through an elimination tournament in one-against-one decision votings.
 
 This is more than anything else a little project to get hands on experience with different technologies/concepts:
 * [go](https://golang.org/) on server side
